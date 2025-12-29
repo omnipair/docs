@@ -82,8 +82,15 @@
               "documentation/resources/parameters",
               "documentation/resources/access-controls",
               "documentation/resources/code-licensing",
-              "documentation/resources/glossary",
-              "documentation/resources/links"
+              "documentation/resources/glossary"
+            ]
+          },
+          {
+            "group": "Links",
+            "pages": [
+              "documentation/links/x",
+              "documentation/links/discord",
+              "documentation/links/github"
             ]
           }
         ]
