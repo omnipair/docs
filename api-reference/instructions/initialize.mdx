@@ -1,0 +1,149 @@
+---
+title: 'Initialize'
+description: 'Initialize a new trading pair and bootstrap with initial liquidity'
+---
+
+# Initialize
+
+Creates a new trading pair and optionally adds initial liquidity in a single transaction.
+
+## Accounts
+
+<ParamField body="deployer" type="Signer" required>
+  The account that will pay for pair creation and provide initial liquidity.
+</ParamField>
+
+<ParamField body="token0_mint" type="InterfaceAccount<Mint>" required>
+  The mint address for token0. Must be less than token1_mint (canonical ordering).
+</ParamField>
+
+<ParamField body="token1_mint" type="InterfaceAccount<Mint>" required>
+  The mint address for token1. Must be greater than token0_mint (canonical ordering).
+</ParamField>
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account to initialize. PDA derived from `[PAIR_SEED_PREFIX, token0, token1, params_hash]`.
+</ParamField>
+
+<ParamField body="futarchy_authority" type="Account<FutarchyAuthority>" required>
+  The futarchy authority account. PDA derived from `[FUTARCHY_AUTHORITY_SEED_PREFIX]`.
+</ParamField>
+
+<ParamField body="rate_model" type="Account<RateModel>" required>
+  The interest rate model account for this pair.
+</ParamField>
+
+<ParamField body="lp_mint" type="UncheckedAccount" required>
+  The LP token mint account. Must be uninitialized and will be initialized by the program.
+</ParamField>
+
+## Arguments
+
+<ParamField body="swap_fee_bps" type="u16" required>
+  Swap fee in basis points (0-10000). Applied to all swaps on this pair.
+</ParamField>
+
+<ParamField body="half_life" type="u64" required>
+  EMA half-life in seconds. Must be between 60 (1 minute) and 43200 (12 hours).
+</ParamField>
+
+<ParamField body="fixed_cf_bps" type="Option<u16>">
+  Optional fixed collateral factor in basis points. If `Some`, overrides dynamic CF calculation.
+</ParamField>
+
+<ParamField body="params_hash" type="[u8; 32]" required>
+  SHA256 hash of `[version, swap_fee_bps, half_life, fixed_cf_bps.unwrap_or(0)]`. Used for pair PDA derivation.
+</ParamField>
+
+<ParamField body="amount0_in" type="u64" required>
+  Initial amount of token0 to deposit. Must be greater than 0.
+</ParamField>
+
+<ParamField body="amount1_in" type="u64" required>
+  Initial amount of token1 to deposit. Must be greater than 0.
+</ParamField>
+
+<ParamField body="min_liquidity_out" type="u64" required>
+  Minimum LP tokens to receive. Used for slippage protection.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let initialize_args = InitializeAndBootstrapArgs {
+    swap_fee_bps: 30, // 0.3%
+    half_life: 3600, // 1 hour
+    fixed_cf_bps: None, // Use dynamic CF
+    params_hash: compute_params_hash(1, 30, 3600, None),
+    version: 1,
+    amount0_in: 1000 * 10u64.pow(token0_decimals),
+    amount1_in: 2000 * 10u64.pow(token1_decimals),
+    min_liquidity_out: 0,
+    lp_name: "OMFG/USDC omLP".to_string(),
+    lp_symbol: "OM.US-OMLP".to_string(),
+    lp_uri: "https://example.com/metadata.json".to_string(),
+};
+
+let accounts = InitializeAndBootstrap {
+    deployer: deployer.key(),
+    token0_mint: token0_mint.key(),
+    token1_mint: token1_mint.key(),
+    pair: pair_pda,
+    futarchy_authority: futarchy_authority_pda,
+    rate_model: rate_model_pda,
+    lp_mint: lp_mint_key,
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::initialize(ctx, initialize_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+import { PublicKey } from '@solana/web3.js';
+
+const initializeArgs = {
+  swapFeeBps: 30, // 0.3%
+  halfLife: new BN(3600), // 1 hour
+  fixedCfBps: null, // Use dynamic CF
+  paramsHash: computeParamsHash(1, 30, 3600, null),
+  version: 1,
+  amount0In: new BN(1000 * 10 ** token0Decimals),
+  amount1In: new BN(2000 * 10 ** token1Decimals),
+  minLiquidityOut: new BN(0),
+  lpName: "OMFG/USDC omLP",
+  lpSymbol: "OM.US-OMLP",
+  lpUri: "https://example.com/metadata.json"
+};
+
+await program.methods
+  .initialize(initializeArgs)
+  .accounts({
+    deployer: deployer.publicKey,
+    token0Mint: token0Mint,
+    token1Mint: token1Mint,
+    pair: pairPda,
+    futarchyAuthority: futarchyAuthorityPda,
+    rateModel: rateModelPda,
+    lpMint: lpMintKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

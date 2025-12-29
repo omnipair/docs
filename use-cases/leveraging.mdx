@@ -1,0 +1,58 @@
+---
+title: "Leveraging"
+description: "How to achieve leveraged positions using recursive borrowing."
+---
+
+## Overview
+
+Omnipair allows users to efficiently gain leveraged exposure to any token pair through **recursive borrowing** within isolated pools. Unlike traditional margin exchanges or lending protocols, Omnipair is permissionless and does not rely on external oracles, enabling leverage even on long-tail assets.
+
+## How Recursive Leverage Works
+
+To achieve leverage, a user follows these steps within the same pool:
+
+1. Deposit Token0 as collateral.
+2. Borrow Token1 against deposited collateral (up to collateral factor limits).
+3. Swap borrowed Token1 to Token0 (increasing exposure to Token0).
+4. Repeat steps 1-3 to multiply exposure.
+
+This iterative process effectively magnifies exposure to the desired asset.
+
+## Limits & Constraints
+
+Leverage on Omnipair is limited by the **Collateral Factor (CF)** of the pool:
+
+$$
+\text{Maximum leverage} = \frac{1}{1 - CF}
+$$
+
+For example, if (CF = 85%), maximum leverage achievable is:
+
+$$
+\frac{1}{1 - 0.85} = 6.67\times
+$$
+
+In practice, achievable leverage may be lower depending on:
+
+- Pool depth and available borrow liquidity
+- Price movement during swaps within the loop
+- Per-market configuration and constraints
+
+## Managing a Leveraged Position
+
+Leveraged positions can be actively managed over time:
+
+- Reduce leverage by repaying borrowed assets
+- Increase safety margin by adding more collateral
+- Close a position by repaying debt and withdrawing collateral
+
+## Advantages of Omnipair's Leveraging Model
+
+- **Permissionless:** No governance approval needed for new asset leverage.
+- **Isolated risk:** Each pair operates independently, eliminating cross-pool risk.
+- **Efficient utilization:** Liquidity is continuously productive.
+- **No oracles:** EMA price mechanisms eliminate oracle manipulation risks.
+
+## Summary
+
+Leveraging through Omnipair enables sophisticated trading strategies and capital efficiency unavailable in traditional AMMs or lending protocols.

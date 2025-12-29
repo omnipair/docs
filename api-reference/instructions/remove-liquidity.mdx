@@ -1,0 +1,104 @@
+---
+title: 'Remove Liquidity'
+description: 'Remove liquidity from a trading pair and receive underlying tokens'
+---
+
+# Remove Liquidity
+
+Removes liquidity from a pair by burning LP tokens and receiving the underlying tokens.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account.
+</ParamField>
+
+<ParamField body="user_lp_token_account" type="InterfaceAccount<TokenAccount>" required>
+  User's LP token account. LP tokens will be burned from here.
+</ParamField>
+
+<ParamField body="user_token0_account" type="InterfaceAccount<TokenAccount>" required>
+  User's token0 account. Will receive token0.
+</ParamField>
+
+<ParamField body="user_token1_account" type="InterfaceAccount<TokenAccount>" required>
+  User's token1 account. Will receive token1.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user removing liquidity. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="liquidity" type="u64" required>
+  Amount of LP tokens to burn. Must be greater than 0.
+</ParamField>
+
+<ParamField body="min_amount0_out" type="u64" required>
+  Minimum amount of token0 to receive. Used for slippage protection.
+</ParamField>
+
+<ParamField body="min_amount1_out" type="u64" required>
+  Minimum amount of token1 to receive. Used for slippage protection.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let remove_liquidity_args = RemoveLiquidityArgs {
+    liquidity: 50 * 10u64.pow(9), // 50 LP tokens (9 decimals)
+    min_amount0_out: 95 * 10u64.pow(token0_decimals),
+    min_amount1_out: 190 * 10u64.pow(token1_decimals),
+};
+
+let accounts = AdjustLiquidity {
+    pair: pair_pda,
+    user_lp_token_account: user_lp_token_account,
+    user_token0_account: user_token0_account,
+    user_token1_account: user_token1_account,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::remove_liquidity(ctx, remove_liquidity_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+const removeLiquidityArgs = {
+  liquidity: new BN(50 * 10 ** 9), // 50 LP tokens
+  minAmount0Out: new BN(95 * 10 ** token0Decimals),
+  minAmount1Out: new BN(190 * 10 ** token1Decimals)
+};
+
+await program.methods
+  .removeLiquidity(removeLiquidityArgs)
+  .accounts({
+    pair: pairPda,
+    userLpTokenAccount: userLpTokenAccount,
+    userToken0Account: userToken0Account,
+    userToken1Account: userToken1Account,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

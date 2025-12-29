@@ -1,0 +1,91 @@
+---
+title: "Impact-aware Collateral Factor"
+description: "Explanation of Omnipair's dynamic collateral factor mechanism."
+---
+
+Omnipair uses a **Impact-Aware Dynamic Collateral Factor** derived from the xy=k invariant, designed to minimize manipulation and insolvency in [Generalized Automated Market Maker](/technical-breakdown/generalized-automated-market-maker) pools by dynamically adjusting borrowing limits based on loan size, liquidity and market conditions.
+
+## The risks with fixed Collateral Factors
+
+**1. Slippage Bypass via Borrowing**
+
+If AMM slippage exceeds the remaining margin (1 - CF), users can borrow instead of swap to bypass the price curve:
+
+- By borrowing until liquidation, users drain one side of the pool.
+- This breaks the AMM invariant (`xy=k`) and leads to complete one-sided liquidity exhaustion.
+
+**2. EMA Lag Exploitation**
+
+If liquidation logic uses delayed EMA prices, users can:
+
+- Borrow at inflated EMA valuations before the EMA adjusts to falling spot prices.
+- LPs incur losses while the protocol remains unaware of the solvency gap.
+
+## Dynamic Collateral Factor
+
+These critical vulnerabilities are solved by continuously adjusting the collateral factor based on real-time AMM conditions, slippage, and market volatility.
+
+### Technical Derivation:
+
+The slippage-aware collateral factor is directly derived from the constant-product (xy=k) AMM equation:
+
+$$
+Y = V \cdot \left(1 - \frac{Y}{R}\right)^2
+$$
+
+Where:
+
+- $( Y )$: Maximum borrowable amount
+- $( V )$: Collateral value at EMA price
+- $( R )$: AMM reserves of the borrowed token
+
+Using a simplified approximation:
+
+$$
+Y \approx V \cdot \left(1 - \sqrt{\frac{V}{R}}\right)
+$$
+
+Refined accuracy is then achieved through Newton-Raphson iterations.
+
+### Pessimistic CF for EMA Lag Protection
+
+To mitigate oracle-lag risk:
+
+$$
+\text{CF}_{\text{pessimistic}} = \min\left( \text{CF}_{\text{base}}, \frac{P_{\text{EMA}}}{P_{\text{spot}}} \cdot \text{CF}_{\text{base}} \right)
+$$
+
+This enforces the solvency condition:
+
+$$
+P_{\text{spot}} \geq P_{\text{EMA}} \cdot \text{CF}
+$$
+
+It ensures that spot prices must always back the borrow amount, even if EMA lags during sharp price declines.
+
+### Final Borrow Limit Calculation:
+
+Each borrow request dynamically computes:
+
+```rust
+let borrow_limit = pessimistic_cf_bps * user_collateral / BPS_DENOMINATOR;
+let remaining_limit = borrow_limit - user_current_debt;
+```
+
+This ensures **safety across all pool conditions**, recalculating in real-time on every:
+
+- `borrow()`
+- `repay()`
+- `swap()`
+- `liquidation check`
+
+## Advantages of this approach:
+
+- **Prevents AMM Slippage Exploits**: Borrow limits adjust dynamically, preserving AMM invariants.
+- **EMA Exploit Mitigation**: Tightens borrow conditions during significant EMA-spot divergence periods.
+- **Enhanced Stability**: Continuous real-time adjustments significantly reduce insolvency risk.
+- **Robust Liquidity Protection**: Protects pool reserves from draining due to manipulated borrowing strategies.
+
+## Summary
+
+Omnipair's **Impact-Aware Dynamic Collateral Factor** replaces static risk assumptions with real-time, on-chain math that adapts to liquidity depth and volatility. It protects both borrowers and liquidity providers from insolvency risks, mispricing attacks, and one-sided liquidity drain.

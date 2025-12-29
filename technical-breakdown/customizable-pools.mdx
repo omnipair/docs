@@ -1,0 +1,56 @@
+---
+title: "Customizable Pools"
+description: "Information about customizable pools in Omnipair."
+---
+
+Omnipair allows anyone to deploy a fully isolated money market for any SPL token pair. Pool behavior is enforced entirely by protocol logic and determined by the parameters chosen at deployment. 
+
+## Pool Creation
+
+To create a pool, a user selects a token pair and configures its risk parameters. Any SPL token pair on Solana can form a market, provided initial liquidity is supplied.
+
+Once deployed, the pool becomes immediately usable by all participants under the defined parameters.
+
+## Risk Configuration
+
+Each pool defines how capital efficiency and risk are balanced. Omnipair provides presets for common profiles, as well as advanced configuration for granular control.
+
+### Preset Profiles
+
+- **Conservative**\
+  Lower collateral factors and leverage with slower price response.
+- **Balanced**\
+  Moderate leverage and risk, suitable for most markets.
+- **Aggressive**\
+  Higher leverage and capital efficiency with increased sensitivity to price changes.
+
+Presets configure multiple parameters together and can be customized further in the **Advanced** mode.
+
+## Price Smoothing (EMA)
+
+Pools use an Exponential Moving Average (EMA) to smooth price movements.
+
+- Shorter EMA half-life reacts faster to price changes
+- Longer half-life prioritizes stability and reduces volatility impact
+
+EMA pricing is used for borrowing limits and liquidation logic, removing reliance on external oracles.
+
+## Collateral Factor (CF)
+
+The Collateral Factor defines how much value can be borrowed against deposited collateral.
+
+- Borrowing power is capped relative to collateral value
+- CF directly determines maximum leverage
+- CF can be fixed or dynamically adjusted based on pool conditions
+
+All borrowing and leverage are **fully collateralized by assets within the same pool**.
+
+## Initial Price and Liquidity
+
+Pool creators set the initial exchange rate and supply the first liquidity for both assets. This establishes the starting market price and activates the pool.
+
+After deployment, liquidity providers and traders interact with the pool under the same parameters.
+
+## Summary
+
+Customizable pools allow isolated money markets to form permissionlessly for any SPL pair. By defining risk, pricing behavior, and capital constraints at deployment, Omnipair enables markets to emerge organically without governance approval, shared risk, or external dependencies.

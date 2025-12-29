@@ -1,0 +1,134 @@
+---
+title: "Liquidations: Debt write-off"
+description: "Explanation of Omnipair's liquidation mechanism using debt write-off."
+---
+
+Omnipair's liquidation mechanism fundamentally differs from traditional DeFi lending protocols. Instead of relying on auctions or forced asset sales, Omnipair leverages an **immediate debt write-off** mechanism, enhancing system stability and protecting liquidity providers (LPs).
+
+## Problem: Traditional Liquidation Risks
+
+In traditional lending protocols (e.g., Aave, Compound), liquidation occurs via third-party liquidators. Liquidators repay borrower debts in exchange for discounted collateral. This causes several critical issues:
+
+- **Instant liquidation**: Sudden collateral sales create market impacts, price slippage, and cascading liquidations.
+- **Reliance on liquidators**: External liquidators may fail or delay during market volatility or network congestion.
+- **Oracle dependency**: Real-time price oracle reliance introduces manipulation risks.
+
+These risks are particularly pronounced in volatile, highly leveraged, or long-tail asset markets.
+
+## Omnipair's Solution: Debt Write-off
+
+Omnipair solves these issues through an internal, oracle-free liquidation process:
+
+### Debt Write-off
+
+When a borrower crosses the liquidation threshold (collateral value \< debt value based on EMA pricing), their debt is immediately removed from the debt accounting pool. This requires no external liquidator.
+
+## Technical Explanation
+
+### Notations:
+
+- Let:
+  - $C_0$: Collateral amount in Token0
+  - $D_1$: Debt amount in Token1
+  - $\text{EMA}_{1 \rightarrow 0}$: Exponential Moving Average price of Token1 denominated in Token0
+  - $CF$: Collateral Factor (e.g., 85%)
+
+### Liquidation Condition:
+
+A borrower becomes insolvent if:
+
+$$
+D_1 \cdot \text{EMA}_{1 \rightarrow 0} > C_0 \cdot CF
+$$
+
+### Debt Write-off Mechanism:
+
+Upon insolvency detection:
+
+- Borrower's debt ($D_1$) is immediately subtracted from the pool's total debt:
+
+  $$
+  D_{\text{total}}' = D_{\text{total}} - D_x
+  $$
+- Borrower's collateral ($C_0$) ownership is transferred internally to the pool.
+
+### Collateral Streaming Mechanics:
+
+Collateral is gradually released back into pool reserves over time, using an exponential decay function. Define:
+
+- $t$: Current time
+- $t_0$: Insolvency event timestamp
+- $\alpha$: Streaming rate constant (determines speed of collateral release)
+
+Collateral released at time $t$ after insolvency event:
+
+$$
+C_{\text{released}}(t) = C_0 \cdot \left(1 - e^{-\alpha (t - t_0)}\right)
+$$
+
+Collateral remaining (yet to be released) at time $t$:
+
+$$
+C_{\text{remaining}}(t) = C_0 \cdot e^{-\alpha (t - t_0)}
+$$
+
+This ensures a smooth, predictable collateral returns, preventing market shocks.
+
+### Solvency Restoration:
+
+Pool reserves are replenished continuously over time, progressively restoring solvency:
+
+$$
+R_{\text{new}}(t) = R_{\text{old}} + C_{\text{released}}(t)
+$$
+
+## Practical Example:
+
+Suppose:
+
+- Collateral Factor: $CF = 85\%$
+- Initial collateral: $C_0 = 100$ Token X
+- Debt: $D_1 = 90$ Token1
+- Initially, EMA: $\text{EMA}_{1 \rightarrow 0} = 1.0$
+
+Initially solvent condition:
+
+$$
+90 \times 1.0 = 90 \leq 100 \times 0.85 = 85 \quad\text{(initially insolvent scenario is false, so actually solvent initially)}
+$$
+
+If EMA price suddenly drops to $0.7$:
+
+$$
+90 \times 0.7 = 63 > 100 \times 0.85 = 85 \quad\text{(now insolvent)}
+$$
+
+This triggers liquidation:
+
+- Debt ($90$ Token Y) immediately written off.
+- Collateral ($100$ Token X) streams back to reserves gradually with streaming rate $\alpha = 0.1 \text{ day}^{-1}$.
+
+Collateral returned after 1 day:
+
+$$
+C_{\text{released}}(1) = 100 \cdot (1 - e^{-0.1 \cdot 1}) \approx 9.5 \text{ Token0}
+$$
+
+Collateral returned after 7 days:
+
+$$
+C_{\text{released}}(7) = 100 \cdot (1 - e^{-0.1 \cdot 7}) \approx 50.3 \text{ Token0}
+$$
+
+This gradual restoration prevents sharp impacts on liquidity reserves.
+
+## Advantages of Omnipair's Approach:
+
+- **No oracle risk**: EMA-based solvency checks remove real-time oracle dependencies.
+- **Market stability**: Smooth recovery prevents sudden price impacts or liquidation cascades.
+- **LP Protection**: Predictable collateral replenishment secures LP capital even during volatility.
+- **Autonomous system**: Eliminates external liquidators, ensuring protocol robustness.
+
+## Summary:
+
+Omnipair's **Debt Write-off & Streaming Collateral** mechanism redefines liquidation as a stable, internalized, and predictable process, effectively managing and mitigating risks typically associated with traditional DeFi liquidations.

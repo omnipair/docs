@@ -1,0 +1,115 @@
+---
+title: 'Constants'
+description: 'Protocol-wide constants and configuration values'
+---
+
+# Constants
+
+Protocol-wide constants used throughout the Omnipair program.
+
+## Global Constants
+
+<ResponseField name="NAD" type="u64" default="1_000_000_000">
+  Nine-decimal fixed point unit (1e9 scaling), similar to WAD (1e18) by Maker. Used for price and rate calculations.
+</ResponseField>
+
+<ResponseField name="NAD_DECIMALS" type="u8" default="9">
+  Number of decimal places for NAD scaling.
+</ResponseField>
+
+<ResponseField name="BPS_DENOMINATOR" type="u16" default="10_000">
+  Basis points denominator (100% = 10000 bps).
+</ResponseField>
+
+<ResponseField name="CLOSE_FACTOR_BPS" type="u16" default="5_000">
+  Close factor for liquidations (50%). Percentage of debt that can be liquidated per transaction.
+</ResponseField>
+
+<ResponseField name="MAX_COLLATERAL_FACTOR_BPS" type="u16" default="8_500">
+  Maximum collateral factor cap (85%) for dynamic collateral factor calculation.
+</ResponseField>
+
+<ResponseField name="LTV_BUFFER_BPS" type="u16" default="500">
+  LTV buffer (5%) between borrow limit and liquidation threshold. Creates safety margin.
+</ResponseField>
+
+<ResponseField name="FLASHLOAN_FEE_BPS" type="u16" default="5">
+  Flash loan fee (0.05%) charged on flash loan amount.
+</ResponseField>
+
+<ResponseField name="LIQUIDATION_INCENTIVE_BPS" type="u16" default="300">
+  Liquidation incentive (3%) paid to liquidator from liquidated collateral.
+</ResponseField>
+
+<ResponseField name="PAIR_CREATION_FEE_LAMPORTS" type="u64" default="200_000_000">
+  Pair creation fee in lamports (0.2 SOL).
+</ResponseField>
+
+## EMA Constants
+
+<ResponseField name="MIN_HALF_LIFE" type="u64" default="60">
+  Minimum EMA half-life in seconds (1 minute).
+</ResponseField>
+
+<ResponseField name="MAX_HALF_LIFE" type="u64" default="43_200">
+  Maximum EMA half-life in seconds (12 hours).
+</ResponseField>
+
+<ResponseField name="TAYLOR_TERMS" type="u64" default="5">
+  Number of terms in Taylor series expansion for exponential calculations.
+</ResponseField>
+
+<ResponseField name="NATURAL_LOG_OF_TWO_NAD" type="u64" default="693_147_180">
+  Natural logarithm of 2 scaled by NAD (ln(2) * 1e9).
+</ResponseField>
+
+## Pair Constants
+
+<ResponseField name="MIN_LIQUIDITY" type="u64" default="1_000">
+  Minimum liquidity (10^3) permanently locked in each pair to prevent share inflation attacks.
+</ResponseField>
+
+<ResponseField name="INITIAL_RATE_BPS" type="u64" default="200">
+  Initial interest rate (2%) in basis points.
+</ResponseField>
+
+<ResponseField name="MIN_RATE_BPS" type="u64" default="100">
+  Minimum interest rate (1%) in basis points.
+</ResponseField>
+
+## Rate Model Constants
+
+<ResponseField name="TARGET_UTIL_START_BPS" type="u64" default="5_000">
+  Lower bound of target utilization band (50%).
+</ResponseField>
+
+<ResponseField name="TARGET_UTIL_END_BPS" type="u64" default="8_500">
+  Upper bound of target utilization band (85%).
+</ResponseField>
+
+<ResponseField name="SECONDS_PER_YEAR" type="u64" default="31_536_000">
+  Number of seconds in a year (365 days).
+</ResponseField>
+
+## Seed Prefixes
+
+<ResponseField name="PAIR_SEED_PREFIX" type="&[u8]" default='b"gamm_pair"'>
+  Seed prefix for pair PDA derivation.
+</ResponseField>
+
+<ResponseField name="POSITION_SEED_PREFIX" type="&[u8]" default='b"gamm_position"'>
+  Seed prefix for user position PDA derivation.
+</ResponseField>
+
+<ResponseField name="FUTARCHY_AUTHORITY_SEED_PREFIX" type="&[u8]" default='b"futarchy_authority"'>
+  Seed prefix for futarchy authority PDA derivation.
+</ResponseField>
+
+<ResponseField name="METADATA_SEED_PREFIX" type="&[u8]" default='b"metadata"'>
+  Seed prefix for metadata PDA derivation.
+</ResponseField>
+
+<ResponseField name="VERSION" type="u8" default="1">
+  Current protocol version.
+</ResponseField>
+

@@ -1,0 +1,118 @@
+---
+title: 'Swap'
+description: 'Swap tokens using the constant-product AMM'
+---
+
+# Swap
+
+Performs a token swap using the constant-product AMM formula.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account. PDA derived from `[PAIR_SEED_PREFIX, token0, token1, params_hash]`.
+</ParamField>
+
+<ParamField body="token_in_vault" type="Account<TokenAccount>" required>
+  The pair vault for the input token. Must be owned by pair PDA.
+</ParamField>
+
+<ParamField body="token_out_vault" type="Account<TokenAccount>" required>
+  The pair vault for the output token. Must be owned by pair PDA.
+</ParamField>
+
+<ParamField body="user_token_in_account" type="Account<TokenAccount>" required>
+  User's input token account. Must have sufficient balance.
+</ParamField>
+
+<ParamField body="user_token_out_account" type="Account<TokenAccount>" required>
+  User's output token account. Will receive swapped tokens.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user performing the swap. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="amount_in" type="u64" required>
+  Amount of input token to swap. Must be greater than 0.
+</ParamField>
+
+<ParamField body="min_amount_out" type="u64" required>
+  Minimum amount of output token to receive. Used for slippage protection.
+</ParamField>
+
+## Formula
+
+The swap uses the constant-product formula:
+
+```
+Δy = (Δx * y) / (x + Δx)
+```
+
+Where:
+- `Δx` = input amount after fees
+- `y` = output reserve
+- `x` = input reserve
+- `Δy` = output amount
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let swap_args = SwapArgs {
+    amount_in: 100 * 10u64.pow(token_in_decimals),
+    min_amount_out: 195 * 10u64.pow(token_out_decimals),
+};
+
+let accounts = Swap {
+    pair: pair_pda,
+    token_in_vault: token0_vault,
+    token_out_vault: token1_vault,
+    user_token_in_account: user_token0_account,
+    user_token_out_account: user_token1_account,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::swap(ctx, swap_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+const swapArgs = {
+  amountIn: new BN(100 * 10 ** tokenInDecimals),
+  minAmountOut: new BN(195 * 10 ** tokenOutDecimals)
+};
+
+await program.methods
+  .swap(swapArgs)
+  .accounts({
+    pair: pairPda,
+    tokenInVault: token0Vault,
+    tokenOutVault: token1Vault,
+    userTokenInAccount: userToken0Account,
+    userTokenOutAccount: userToken1Account,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

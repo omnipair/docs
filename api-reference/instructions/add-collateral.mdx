@@ -1,0 +1,92 @@
+---
+title: 'Add Collateral'
+description: 'Add collateral to a user position'
+---
+
+# Add Collateral
+
+Adds collateral to a user's position, enabling borrowing against it.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account.
+</ParamField>
+
+<ParamField body="user_position" type="Account<UserPosition>" required>
+  The user's position account. Will be created if it doesn't exist. PDA derived from `[POSITION_SEED_PREFIX, pair, user]`.
+</ParamField>
+
+<ParamField body="collateral_vault" type="InterfaceAccount<TokenAccount>" required>
+  The pair vault for the collateral token. Must be owned by pair PDA.
+</ParamField>
+
+<ParamField body="user_collateral_token_account" type="InterfaceAccount<TokenAccount>" required>
+  User's collateral token account. Must have sufficient balance.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user adding collateral. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="amount" type="u64" required>
+  Amount of collateral to add. Must be greater than 0.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let add_collateral_args = AdjustPositionArgs {
+    amount: 1000 * 10u64.pow(collateral_token_decimals),
+};
+
+let accounts = AddCollateral {
+    pair: pair_pda,
+    user_position: user_position_pda,
+    collateral_vault: token0_vault,
+    user_collateral_token_account: user_token0_account,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::add_collateral(ctx, add_collateral_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+const addCollateralArgs = {
+  amount: new BN(1000 * 10 ** collateralTokenDecimals)
+};
+
+await program.methods
+  .addCollateral(addCollateralArgs)
+  .accounts({
+    pair: pairPda,
+    userPosition: userPositionPda,
+    collateralVault: token0Vault,
+    userCollateralTokenAccount: userToken0Account,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

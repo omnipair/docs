@@ -1,0 +1,59 @@
+---
+title: "Liquidity Provisioning (Earn)"
+description: "How liquidity providers earn on Omnipair."
+---
+
+## Overview
+
+Liquidity providers on Omnipair supply assets into a market’s liquidity pool and earn yield through two primary flows:
+
+• **Trading fees** generated when users swap tokens within the pool\
+• **Interest revenue** from borrowers who borrow against collateral in that pool
+
+Unlike traditional AMM LP positions, LPs on Omnipair benefit from both swap activity and lending demand, with interest accruing directly into a pool’s reserves.
+
+## How LP Earnings Work
+
+When you provide liquidity:
+
+- Your tokens are added to a market's unified pool alongside other LPs' assets
+- Traders pay fees when executing swaps; those fees are distributed to LPs pro-rata
+- Borrowers pay interest on outstanding debt, which accrues back into pool reserves
+
+This allows LPs to earn from both trading volume and borrowing demand through one deposit without needing to manage separate positions. Users can adjust their provided liquidity at any given point in time by adding or removing liquidity partially, or entirely. 
+
+## Liquidations
+
+If a borrower becomes undercollateralized:
+
+- Their debt is immediately written off in accounting
+- Borrower collateral is used to cover outstanding debt
+- Any residual impact is absorbed by the pool
+
+Detailed liquidation mechanics are covered in the **Protocol** section.
+
+## Risk Profile
+
+| Risk             | Explanation                                    | Mitigation                                 |
+| ---------------- | ---------------------------------------------- | ------------------------------------------ |
+| Impermanent Loss | Applies during volatile swaps, similar to AMMs | Partially offset by borrow interest        |
+| Credit Risk      | Borrowers may default                          | EMA pricing + isolated pools + CF caps     |
+| Liquidity Lock   | Excessive utilization can slow LP withdrawals  | Dynamic interest rate incentivizes balance |
+
+## LP Withdrawals
+
+When you remove liquidity:
+
+- You receive back your pro-rata share of Token0 and Token1
+- Withdrawals check solvency: pool must remain collateralized
+- If utilization is too high, part of your liquidity may be temporarily "locked" (as borrowed funds)
+
+## Design Rationale
+
+- **Unified pools** = better capital efficiency
+- **Interest model** = rewards LPs without volatility
+- **Market isolation** = ensures exposure is limited to one market
+
+## Summary
+
+On Omnipair, LPs earn like both Uniswap LPs and Aave lenders through one position. While risks are present, they're transparent and isolated per pair, with protective design choices to keep capital safe and productive.

@@ -1,0 +1,27 @@
+---
+title: "Protocol Governable Parameters"
+description: "Parameters that can be controlled by OMFG governance."
+---
+
+# Protocol Governable Parameters
+
+> Omnipair's contracts are immutable — they cannot be upgraded or modified after deployment. However, **OMFG governance still controls a set of meta-parameters**, allowing it to regulate the system without interfering with its core logic.
+
+**1. Protocol-Level Fees**
+
+- **Governance fee** → Paid into Omnipair treasury
+- **Team fee** → Capped and transparently directed to the team
+
+Both fees are adjustable by governance.
+
+**2. Pool Governance Settings**
+
+Governance does not directly control individual pools but instead regulates the rules by which pool creators can modify them:
+
+- **Vetoing Timelocked Actions** — All changes initiated by pool creators go through a delay period. During that time, a futarchy vote can veto the action.
+- **Changing Governance Parameters** — Governance can adjust:
+  - Timelock duration
+  - Proposal fee
+  - Bond size (which can be slashed)
+
+This structure transforms governance into a regulatory layer, not a central controller.

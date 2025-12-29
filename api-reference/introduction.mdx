@@ -1,0 +1,67 @@
+---
+title: 'Introduction'
+description: 'Omnipair Solana program code reference documentation'
+---
+
+# Code Reference
+
+Welcome to the Omnipair Solana program code reference. This documentation provides detailed information about the Anchor program implementation, including instructions, accounts, errors, and constants.
+
+## Program Overview
+
+The Omnipair program is a Solana Anchor program that implements a Generalized Automated Market Maker (GAMM) with integrated lending functionality. It enables:
+
+- **Spot Trading**: Constant-product AMM swaps
+- **Liquidity Provision**: Add and remove liquidity from pools
+- **Margin Lending**: Borrow against collateral with dynamic interest rates
+- **Flash Loans**: Uncollateralized loans that must be repaid in the same transaction
+- **Liquidations**: Automated liquidation of undercollateralized positions
+
+## Program ID
+
+- **Devnet**: `2h6oKUk4jcNQ81EzKvYVtzsyRpJwsz6J2pEeQTo1KsQB`
+- **Mainnet**: `3tJrAXnjofAw8oskbMaSo9oMAYuzdBgVbW3TvQLdMEBd`
+
+<Card
+  title="OpenAPI Specification"
+  icon="code"
+  href="https://github.com/omnipair/omnipair-rs"
+>
+  View the complete OpenAPI specification file
+</Card>
+
+## Architecture
+
+The program is organized into several modules:
+
+- **Instructions**: Entry points for program interactions
+  - Liquidity management (initialize, add, remove)
+  - Spot trading (swap)
+  - Lending operations (collateral, borrow, repay, liquidate, flashloan)
+  - Futarchy governance (authority management, fee distribution)
+  - View functions (read-only data access)
+- **State**: On-chain account structures
+  - `Pair`: Pool state and reserves
+  - `UserPosition`: User collateral and debt tracking
+  - `FutarchyAuthority`: Protocol governance and fee configuration
+  - `RateModel`: Interest rate model configuration
+- **Utils**: Helper functions for math, token operations, and account management
+- **Constants**: Protocol-wide constants and configuration
+
+## Key Features
+
+### Oracle-less Pricing
+- Uses EMA (Exponential Moving Average) of spot prices for debt valuation
+- No external oracle dependencies
+
+### Dynamic Collateral Factors
+- Slippage-aware collateral factors derived from AMM reserves
+- Ensures lending doesn't break the AMM invariant
+
+### Utilization-based Interest Rates
+- Interest rates adjust based on pool utilization
+- Exponential rate model with target utilization bands
+
+### Isolated Collateral Pools
+- Each pair operates as an isolated lending market
+- No cross-pool risk exposure

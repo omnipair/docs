@@ -1,0 +1,161 @@
+---
+title: "Overview"
+description: "An overview of Omnipair's Generalized Automated Market Maker (GAMM)."
+---
+
+![Placeholder Gamm Architecture7(1)](/images/placeholder-gamm-architecture7\(1\).svg)
+
+Omnipair is powered by a Generalized Automated Market Maker (GAMM), a primitive that combines constant-product AMM functionality with isolated lending logic. This allows a single pool to support both spot trading and margin borrowing without oracles or centralized risk config.
+
+Each pool holds a token pair and provides:
+
+- Swap functionality via spot prices
+- Margin borrowing based on time-weighted EMA prices
+- Interest accrual via utilization-based dynamic rates
+- Liquidation through write-offs and streaming collateral
+
+## Pool Structure
+
+Each pool is defined by two tokens ($x$, $y$). Liquidity is added in a constant product — $(xy = k)$ where $k = L^2$ — fashion, and reserves are tracked. Each pool contains two types of reserves:
+
+- **Virtual Reserve**
+- **Actual Reserve**
+
+### Spot Price
+
+Derived from the pool's token virtual reserves:
+
+$$
+\text{Spot Price }_{0 \rightarrow 1} = \frac{\text{Virtual Reserve}_1}{\text{Virtual Reserve}_0}
+$$
+
+Used for swap execution and is updated by every spot trade, while lent liquidity is not calculated in the virtual reserves:
+
+$$
+\text{Reserve}_{actual} = \text{Reserve}_{virtual} - \text{Reserve}_{debt}
+$$
+
+### EMA Price (Smoothed Lending Price)
+
+A time-weighted Exponential Moving Average of the spot price. EMA pricing smooths volatility and prevents manipulation around liquidation events.
+
+$$
+\text{EMA}(t) = \alpha \cdot \text{Price}(t) + (1 - \alpha) \cdot \text{EMA}(t - 1)
+$$
+
+Where:
+
+$$
+\alpha = 1 - e^{-\frac{\Delta t}{\tau}}
+$$
+
+- $\Delta t$: Time since last update
+- $(\tau)$: Exponential decay constant (half-life converted to continuous time)
+
+This price is used to compute borrowing power and liquidation thresholds.
+
+## Borrowing & Collateralization
+
+Each user can deposit either Token0 or Token1 as collateral. Debt is tracked per user using debt shares, ensuring proportional interest accrual.
+
+Let:
+
+- $C_0$: collateral in Token0
+- $D_1$: debt in Token1
+- $( CF )$: collateral factor (e.g. 85%)
+
+Then borrowing is allowed if:
+
+$$
+D_1 \cdot \text{EMA}_{1 \rightarrow 0} \leq C_0 \cdot CF
+$$
+
+Solvency is checked against EMA prices, not spot, to prevent manipulation.
+
+## Interest Rate Model
+
+Each pool uses a dynamic interest rate model that adjusts based on utilization:
+
+$$
+U = \frac{\text{TotalDebt}}{\text{Reserve}}
+$$
+
+Depending on $( U )$, the borrow rate evolves:
+
+### Utilization Bands:
+
+- **Low**: $( U < 33\% )$ → rate decays (halves) exponentially
+- **High**: $( U > 66\% )$ → rate grows (doubles) exponentially
+- **In-between**: rate remains stable
+
+The model uses an exponential formula with a tunable half-life ( T_1/2 ):
+
+$$
+r_t = r_{t-1} \cdot 2^{\pm \frac{\Delta t}{T_{1/2}}}
+$$
+
+Accrued interest is computed as:
+
+$$
+\text{Interest} = \text{Debt} \cdot \text{Integral}
+$$
+
+Where the integral is calculated using:
+
+$$
+\int r(t) dt = \frac{r_{\text{end}} - r_{\text{start}}}{\ln(2) / T_{1/2}}
+$$
+
+The rate is updated on any pool interaction (`swap`, `borrow`, `repay`, etc.).
+
+## Liquidation & Solvency Enforcement
+
+There are no auctions or instant liquidations. Instead, when a borrower exceeds their limit:
+
+1. Their position is marked as insolvent.
+2. Their debt is written off (removed from the debt pool).
+
+This model avoids large price impacts, frontrunning, and incentivizes safe borrowing by LPs and traders alike.
+
+Liquidation protection logic ensures:
+
+- Pool stays solvent even if collateral drops in value.
+- LPs do not suffer withdrawal failures due to shortfall in reserves.
+
+## Recursive Leverage (Looping)
+
+To take leveraged positions on a token (say $\text{Pair}_{\text{base}}$), users can:
+
+1. Deposit $\text{Pair}_{\text{base}}$ as collateral.
+2. Borrow $\text{Pair}_{\text{quote}}$.
+3. Swap $\text{Pair}_{\text{quote}}$ → $\text{Pair}_{\text{base}}$.
+4. Repeat steps 1–3.
+
+This loop effectively increases exposure to $\text{Pair}_{\text{base}}$, achieving leverage.
+
+Leverage achievable is capped by the collateral factor $(CF)$:
+
+$$
+\text{Max Leverage} = \frac{1}{1 - CF}
+$$
+
+Example with $( CF = 0.85 )$:
+
+$$
+\text{Max Leverage} = \frac{1}{1 - 0.85} = 6.67\times
+$$
+
+This model is similar to recursive borrowing in protocols like Compound or Aave, but is achieved here within a single isolated pool, avoiding cross-asset risk.
+
+## Summary
+
+| Mechanism           | Implementation                                |
+| ------------------- | --------------------------------------------- |
+| **Pricing**         | Spot (for swaps), EMA (for lending)           |
+| **Liquidations**    | Streaming write-off                           |
+| **Interest Rates**  | Exponential decay/growth based on utilization |
+| **Borrowing Model** | Isolated per pool                             |
+| **Leverage**        | Recursive, within single pool                 |
+| **Oracles**         | Not required                                  |
+
+Omnipair combines capital efficiency with safety by avoiding systemic liquidation risks, external oracles, and governance bottlenecks.

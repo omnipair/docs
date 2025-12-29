@@ -1,0 +1,251 @@
+---
+title: 'Errors'
+description: 'Complete list of program error codes'
+---
+
+# Errors
+
+All error codes returned by the Omnipair program.
+
+## Error Codes
+
+<ResponseField name="InvalidDeployer" type="ErrorCode">
+  The deployer account is invalid.
+</ResponseField>
+
+<ResponseField name="ArgumentMissing" type="ErrorCode">
+  A required argument is missing.
+</ResponseField>
+
+<ResponseField name="InvalidSwapFeeBps" type="ErrorCode">
+  Swap fee in basis points is invalid (must be 0-10000).
+</ResponseField>
+
+<ResponseField name="InvalidHalfLife" type="ErrorCode">
+  EMA half-life is invalid (must be 60-43200 seconds).
+</ResponseField>
+
+<ResponseField name="InvalidFutarchyAuthority" type="ErrorCode">
+  The futarchy authority account is invalid.
+</ResponseField>
+
+<ResponseField name="InvalidArgument" type="ErrorCode">
+  An argument is invalid.
+</ResponseField>
+
+<ResponseField name="InsufficientCollateral" type="ErrorCode">
+  Insufficient collateral for the operation.
+</ResponseField>
+
+<ResponseField name="AmountZero" type="ErrorCode">
+  Amount cannot be zero.
+</ResponseField>
+
+<ResponseField name="InsufficientAmount0In" type="ErrorCode">
+  Insufficient amount0 provided.
+</ResponseField>
+
+<ResponseField name="InsufficientAmount1In" type="ErrorCode">
+  Insufficient amount1 provided.
+</ResponseField>
+
+<ResponseField name="BorrowingPowerExceeded" type="ErrorCode">
+  Borrowing would exceed available borrowing power.
+</ResponseField>
+
+<ResponseField name="InvalidTokenAccount" type="ErrorCode">
+  The token account is invalid.
+</ResponseField>
+
+<ResponseField name="InvalidTokenProgram" type="ErrorCode">
+  The token program is invalid.
+</ResponseField>
+
+<ResponseField name="BorrowExceedsReserve" type="ErrorCode">
+  Borrow amount exceeds available reserves.
+</ResponseField>
+
+<ResponseField name="InsufficientAmount0" type="ErrorCode">
+  Insufficient amount0 available.
+</ResponseField>
+
+<ResponseField name="InsufficientAmount1" type="ErrorCode">
+  Insufficient amount1 available.
+</ResponseField>
+
+<ResponseField name="InsufficientOutputAmount" type="ErrorCode">
+  Output amount is below the minimum required.
+</ResponseField>
+
+<ResponseField name="InsufficientLiquidity" type="ErrorCode">
+  Insufficient liquidity for the operation.
+</ResponseField>
+
+<ResponseField name="Overflow" type="ErrorCode">
+  Arithmetic overflow occurred.
+</ResponseField>
+
+<ResponseField name="Undercollateralized" type="ErrorCode">
+  Position is undercollateralized.
+</ResponseField>
+
+<ResponseField name="InsufficientBalanceForCollateral" type="ErrorCode">
+  Insufficient balance to add as collateral.
+</ResponseField>
+
+<ResponseField name="InsufficientAmount" type="ErrorCode">
+  Insufficient amount available.
+</ResponseField>
+
+<ResponseField name="InsufficientDebt" type="ErrorCode">
+  Insufficient debt to repay.
+</ResponseField>
+
+<ResponseField name="UserPositionNotInitialized" type="ErrorCode">
+  User position has not been initialized.
+</ResponseField>
+
+<ResponseField name="ZeroDebtAmount" type="ErrorCode">
+  Debt amount is zero.
+</ResponseField>
+
+<ResponseField name="NotUndercollateralized" type="ErrorCode">
+  Position is not undercollateralized (cannot be liquidated).
+</ResponseField>
+
+<ResponseField name="BrokenInvariant" type="ErrorCode">
+  The AMM invariant has been broken.
+</ResponseField>
+
+<ResponseField name="InvariantOverflow" type="ErrorCode">
+  Math overflow during invariant calculation.
+</ResponseField>
+
+<ResponseField name="FeeMathOverflow" type="ErrorCode">
+  Math overflow during fee calculation.
+</ResponseField>
+
+<ResponseField name="OutputAmountOverflow" type="ErrorCode">
+  Math overflow during output amount calculation.
+</ResponseField>
+
+<ResponseField name="ReserveOverflow" type="ErrorCode">
+  Math overflow during reserve calculation.
+</ResponseField>
+
+<ResponseField name="DenominatorOverflow" type="ErrorCode">
+  Math overflow during denominator calculation.
+</ResponseField>
+
+<ResponseField name="LiquidityMathOverflow" type="ErrorCode">
+  Math overflow during liquidity calculation.
+</ResponseField>
+
+<ResponseField name="LiquiditySqrtOverflow" type="ErrorCode">
+  Math overflow during liquidity square root calculation.
+</ResponseField>
+
+<ResponseField name="LiquidityUnderflow" type="ErrorCode">
+  Math underflow during liquidity calculation.
+</ResponseField>
+
+<ResponseField name="LiquidityConversionOverflow" type="ErrorCode">
+  Math overflow during liquidity conversion.
+</ResponseField>
+
+<ResponseField name="SupplyOverflow" type="ErrorCode">
+  Math overflow during supply calculation.
+</ResponseField>
+
+<ResponseField name="DebtMathOverflow" type="ErrorCode">
+  Math overflow during debt calculation.
+</ResponseField>
+
+<ResponseField name="DebtShareMathOverflow" type="ErrorCode">
+  Math overflow during debt share calculation.
+</ResponseField>
+
+<ResponseField name="DebtShareDivisionOverflow" type="ErrorCode">
+  Math overflow during debt share division.
+</ResponseField>
+
+<ResponseField name="DebtUtilizationOverflow" type="ErrorCode">
+  Math overflow during debt utilization calculation.
+</ResponseField>
+
+<ResponseField name="InvalidMint" type="ErrorCode">
+  The mint account is invalid.
+</ResponseField>
+
+<ResponseField name="InvalidMintLen" type="ErrorCode">
+  Invalid mint account length.
+</ResponseField>
+
+<ResponseField name="InvalidDistribution" type="ErrorCode">
+  Revenue distribution percentages must sum to 100%.
+</ResponseField>
+
+<ResponseField name="InvalidLpMintKey" type="ErrorCode">
+  Invalid LP mint key (production: must end with "omLP").
+</ResponseField>
+
+<ResponseField name="InvalidLpName" type="ErrorCode">
+  Invalid LP name (must be <= 32 ASCII characters).
+</ResponseField>
+
+<ResponseField name="InvalidLpSymbol" type="ErrorCode">
+  Invalid LP symbol (must be <= 10 ASCII characters).
+</ResponseField>
+
+<ResponseField name="InvalidLpUri" type="ErrorCode">
+  Invalid LP URI (must be <= 200 characters and start with "http").
+</ResponseField>
+
+<ResponseField name="AccountNotEmpty" type="ErrorCode">
+  Account is not empty.
+</ResponseField>
+
+<ResponseField name="InvalidMintAuthority" type="ErrorCode">
+  Invalid mint authority.
+</ResponseField>
+
+<ResponseField name="FrozenLpMint" type="ErrorCode">
+  LP mint is frozen.
+</ResponseField>
+
+<ResponseField name="NonZeroSupply" type="ErrorCode">
+  Mint supply is not zero.
+</ResponseField>
+
+<ResponseField name="WrongLpDecimals" type="ErrorCode">
+  LP mint has wrong decimals (must be 9).
+</ResponseField>
+
+<ResponseField name="InvalidVaultIn" type="ErrorCode">
+  Invalid input vault (must be owned by pair).
+</ResponseField>
+
+<ResponseField name="InvalidVaultOut" type="ErrorCode">
+  Invalid output vault (must be owned by pair).
+</ResponseField>
+
+<ResponseField name="InvalidVaultSameAccount" type="ErrorCode">
+  Input and output vaults must be different accounts.
+</ResponseField>
+
+<ResponseField name="InvalidVault" type="ErrorCode">
+  Invalid vault account.
+</ResponseField>
+
+<ResponseField name="InvalidParamsHash" type="ErrorCode">
+  Params hash does not match computed parameters.
+</ResponseField>
+
+<ResponseField name="InvalidVersion" type="ErrorCode">
+  Invalid protocol version.
+</ResponseField>
+
+<ResponseField name="InvalidTokenOrder" type="ErrorCode">
+  Invalid token order (token0 must be less than token1).
+</ResponseField>
+

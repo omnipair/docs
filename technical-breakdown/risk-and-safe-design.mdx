@@ -1,0 +1,47 @@
+---
+title: "Risk and Safe design"
+description: "Omnipair's risk management and safety mechanisms."
+---
+
+Bad debt can occur in any lending pool when the market value of collateral rapidly decreases, causing it to fall below the required collateral threshold (LTV). Omnipair employs innovative mechanisms to effectively control and recover from bad debt accrual:
+
+- **Isolated Pools** Insolvencies remain isolated within their respective pools and are not shared across the protocol, safeguarding overall systemic health.
+- **Collateral Streaming** Rather than instantly liquidating collateral into the AMM—which can cause front-running, sandwich attacks, or cascading liquidations—collateral is gradually streamed back into reserves via a time-based decay model, similar to a continuous gradual Dutch auction (GDA).
+- **Socialized Losses** Any residual bad debt manifests as permanent loss (PL) for liquidity providers. These losses are socialized proportionally among all LPs through adjustments to the pool's reserves (the `k` invariant). This prevents bank-run scenarios common in traditional lending protocols, where early exitors evade losses, leaving later participants exposed. LPs who exit immediately after insolvency realize their losses instantly, whereas those who remain may recover value over time.
+- **Dynamic Collateral Factor** Collateral factors (LTV ratios) adjust dynamically based on an internal liquidity oracle monitoring pool liquidity conditions. This reduces insolvency risks by tightening collateral requirements during periods of low liquidity, thereby minimizing potential bad debt events.
+- **Recoverable Losses** LP permanent losses can be potentially recovered through future collateral price appreciation, accrued borrowing interest, and ongoing swap fee revenues, gradually restoring reserves and value.
+
+## Recursive Leverage & Bad Debt Analysis
+
+While recursive borrowing is a powerful tool for achieving leverage, it introduces scenarios that could lead to **bad debt**. Here's how this happens and how Omnipair addresses it:
+
+### How Bad Debt Can Occur:
+
+- Users taking leveraged positions rely on EMA price to maintain solvency.
+- EMA price has inherent lag, slightly trailing real-time spot market prices.
+- A sudden and significant move in spot price (e.g., Token0 rapidly dropping before EMA adjusts) can briefly create under collateralization.
+
+**Example scenario:**
+
+- Alice recursively leverages to the maximum allowed (6.67x) exposure on Token0.
+- Spot price of Token0 drops abruptly from 1 to 0.7 Token1, EMA still at ~0.9.
+- Alice's actual collateral value drops sharply, but EMA lags behind, not immediately triggering liquidation.
+- Once EMA catches up, Alice's debt (in Token1 terms) now exceeds her collateral value (Token0 at the new EMA rate), causing under collateralization and creating bad debt.
+
+### Traditional Liquidations vs. Omnipair's Write-Off Mechanism:
+
+Traditional liquidation:
+
+- Requires external liquidators.
+- Repays debt via forced asset sales at discounts.
+- Creates immediate price impacts and cascading liquidation risk.
+
+Omnipair's solution:
+
+- Debt is **written off** immediately once under collateralization is detected.
+- Collateral isn't instantly sold—instead, it is **streamed gradually** back into pool reserves.
+- This slow drip replenishes pool reserves without abrupt market impact or external liquidator reliance.
+
+### Summary:
+
+Omnipair acknowledges recursive borrowing can amplify risks, including bad debt. By design, the protocol isolates, contains, and gradually neutralizes these risks. Thus, it enables safe, permissionless leverage on long-tail assets without systemic solvency threats.

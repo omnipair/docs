@@ -1,0 +1,177 @@
+---
+title: "Getting Started"
+description: "Step-by-step guide to using Omnipair for the first time."
+---
+
+## **Welcome to Omnipair**
+
+This guide will walk you through your first steps with Omnipair. Whether you want to trade, provide liquidity, or borrow, we’ll cover everything you need to know.
+
+## **Prerequisites**
+
+Before you begin, make sure you have:
+
+- A Solana wallet (Phantom, Solflare, or similar)
+- Some SOL for transaction fees
+- Tokens you want to trade or provide as liquidity
+
+## **Step 1: Connect Your Wallet**
+
+1. Visit [**omnipair.fi**](http://omnipair.fi)
+2. Click “Connect Wallet” in the top right
+3. Select your wallet provider
+4. Approve the connection
+
+Make sure you’re connected to the correct network (Mainnet for production, Devnet for testing).
+
+## **Step 2: Choose Your Action**
+
+Omnipair supports three main actions:
+
+### **Trading (Swapping)**
+
+Swap tokens using Omnipair’s AMM:
+
+1. Navigate to the “Trade” tab
+2. Select the token you want to swap from
+3. Select the token you want to swap to
+4. Enter the amount
+5. Review the swap details (price impact, fees)
+6. Click “Swap” and approve the transaction
+
+### **Borrowing**
+
+Borrow against collateral:
+
+1. Navigate to the “Borrow” tab
+2. Select a pair
+3. Add collateral (deposit tokens)
+4. Set your borrowing amount
+5. Review borrowing power and interest rate
+6. Click “Borrow” and approve the transaction
+
+### **Providing Liquidity**
+
+Add liquidity to earn fees:
+
+1. Navigate to the “Markets” tab
+2. Select a pair (or create a new one)
+3. Enter amounts for both tokens
+4. Review the LP tokens you’ll receive
+5. Click “Add Liquidity” and approve the transaction
+
+## **Step 3: Understanding Key Concepts**
+
+### **Liquidity Pools**
+
+Each trading pair has its own liquidity pool. The pool contains:
+
+- **Reserves**: Tokens available for swapping
+- **Collateral**: User-deposited collateral for borrowing
+- **Debt**: Outstanding borrows
+
+### **LP Tokens**
+
+When you add liquidity, you receive LP (Liquidity Provider) tokens representing your share of the pool. These tokens:
+
+- Earn fees from swaps and borrowing
+- Can be burned to withdraw your liquidity
+- Appreciate in value as the pool grows
+
+### **Collateral Factor**
+
+The collateral factor determines how much you can borrow:
+
+- Maximum: 85% of collateral value
+- Dynamic: Adjusts based on pool conditions
+- Locked: CF is locked when you borrow
+
+### **Interest Rates**
+
+Interest rates are utilization-based:
+
+- **Low utilization**: Lower rates (minimum 1% APR)
+- **High utilization**: Higher rates (can grow exponentially)
+- **Target band**: Stable rates at 50-85% utilization
+
+## **Step 4: Your First Transaction**
+
+Let’s walk through a simple swap:
+
+1. **Select Tokens**: Choose USDC → SOL
+2. **Enter Amount**: Enter 100 USDC
+3. **Review**: Check the output amount and price impact
+4. **Approve**: Approve token spending (first time only)
+5. **Swap**: Confirm the swap transaction
+6. **Done**: Receive SOL in your wallet
+
+Always check the price impact and slippage tolerance. High slippage can result in unfavorable rates.
+
+## **Other Common Actions**
+
+### **Adjusting Provided Liquidity**
+
+1. Select a pair
+1. Go to “Liquidity” → “Adjust Liquidity”
+3. Enter amounts to add or withdraw (maintain ratio)
+4. Approve and confirm
+
+### **Creating a Leveraged Position**
+
+1. Add collateral (e.g., SOL)
+2. Borrow against it (e.g., USDC)
+3. Swap borrowed tokens for more collateral
+4. Repeat to increase leverage
+
+Leverage increases both potential gains and losses. Use with caution and understand liquidation risks.
+
+### **Monitoring Your Position**
+
+- Check your position health
+- Monitor liquidation price
+- Track interest accrual
+- View borrowing power
+
+## **Safety Tips**
+
+1. **Start Small**: Test with small amounts first
+2. **Check Slippage**: Always review price impact
+3. **Monitor Positions**: Keep an eye on leveraged positions
+4. **Understand Risks**: Read about liquidations and CF
+5. **Use Limits**: Set appropriate slippage tolerance
+
+## **Troubleshooting**
+
+### **Transaction Failed**
+
+- Check you have enough SOL for fees
+- Verify token approvals
+- Check slippage tolerance
+- Ensure sufficient balance
+
+### **High Slippage**
+
+- Use smaller amounts
+- Check pool liquidity
+- Consider different pairs
+- Wait for better conditions
+
+### **Position Liquidated**
+
+- Monitor health factor
+- Add more collateral
+- Repay debt
+- Understand liquidation mechanics
+
+## **Next Steps**
+
+Now that you’ve completed the basics:
+
+- **Learn More**: Read about [**Protocol Mechanics**](https://muhammedomnipairfi.mintlify.app/protocol/overview)
+- **Explore Use Cases**: Check out [**Use Cases**](https://muhammedomnipairfi.mintlify.app/use-cases/leveraging)
+- **Join Community**: [**Discord**](https://discord.gg/omnipair)
+
+## **Need Help?**
+
+- **Documentation**: Browse our [**docs**](https://muhammedomnipairfi.mintlify.app/introduction)
+- **Support**: Ask questions and get help in our [Discord](https://discord.gg/omnipair)

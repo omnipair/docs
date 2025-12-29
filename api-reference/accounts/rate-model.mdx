@@ -1,0 +1,55 @@
+---
+title: 'Rate Model'
+description: 'Interest rate model configuration'
+---
+
+# Rate Model
+
+The `RateModel` account stores the interest rate model parameters for calculating dynamic interest rates based on utilization.
+
+## Account Structure
+
+```rust
+#[account]
+pub struct RateModel {
+    /// exp_rate: NAD/second (k_real = exp_rate / NAD)
+    pub exp_rate: u64,
+    /// utilization band edges (NAD-scaled: 0..NAD)
+    pub target_util_start: u64,
+    pub target_util_end: u64,
+}
+```
+
+## Fields
+
+<ParamField body="exp_rate" type="u64">
+  Exponential rate parameter in NAD/second. Controls how quickly rates adjust. Default: `ln(2) / 3600` (half-life of 1 hour).
+</ParamField>
+
+<ParamField body="target_util_start" type="u64">
+  Lower bound of target utilization band (NAD-scaled). Default: 50% (5000 bps).
+</ParamField>
+
+<ParamField body="target_util_end" type="u64">
+  Upper bound of target utilization band (NAD-scaled). Default: 85% (8500 bps).
+</ParamField>
+
+## Rate Calculation
+
+The rate model uses an exponential model with three utilization bands:
+
+1. **Low Utilization** (< `target_util_start`): Rate exponentially decays toward minimum rate
+2. **Target Utilization** (`target_util_start` to `target_util_end`): Rate remains flat
+3. **High Utilization** (> `target_util_end`): Rate exponentially grows (no cap)
+
+The rate calculation uses:
+- Exponential decay/growth: `r(t) = r0 * e^(±k*t)`
+- Integration for interest accrual: `interest = debt * integral / NAD`
+
+## Default Values
+
+- `exp_rate`: `ln(2) / 3600` (half-life of 1 hour)
+- `target_util_start`: 50% (5000 bps)
+- `target_util_end`: 85% (8500 bps)
+- Minimum rate: 1% (100 bps)
+

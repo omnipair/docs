@@ -1,0 +1,107 @@
+---
+title: 'User Position'
+description: 'User position account tracking collateral and debt'
+---
+
+# User Position
+
+The `UserPosition` account tracks a user's collateral and debt for a specific pair.
+
+## Account Structure
+
+```rust
+#[account]
+pub struct UserPosition {
+    // User and pair info
+    pub owner: Pubkey,
+    pub pair: Pubkey,
+    pub collateral0_applied_min_cf_bps: u16,
+    pub collateral1_applied_min_cf_bps: u16,
+    
+    // Collateral tracking
+    pub collateral0: u64,
+    pub collateral1: u64,
+    
+    // Debt tracking
+    pub debt0_shares: u64,
+    pub debt1_shares: u64,
+
+    // PDA bump
+    pub bump: u8,
+}
+```
+
+## Fields
+
+<ParamField body="owner" type="Pubkey">
+  The owner of this position.
+</ParamField>
+
+<ParamField body="pair" type="Pubkey">
+  The pair this position belongs to.
+</ParamField>
+
+<ParamField body="collateral0_applied_min_cf_bps" type="u16">
+  Applied minimum collateral factor (in BPS) for borrowing token1 using token0 as collateral.
+</ParamField>
+
+<ParamField body="collateral1_applied_min_cf_bps" type="u16">
+  Applied minimum collateral factor (in BPS) for borrowing token0 using token1 as collateral.
+</ParamField>
+
+<ParamField body="collateral0" type="u64">
+  Amount of token0 deposited as collateral.
+</ParamField>
+
+<ParamField body="collateral1" type="u64">
+  Amount of token1 deposited as collateral.
+</ParamField>
+
+<ParamField body="debt0_shares" type="u64">
+  Debt shares for token0. Used to calculate actual debt including interest.
+</ParamField>
+
+<ParamField body="debt1_shares" type="u64">
+  Debt shares for token1. Used to calculate actual debt including interest.
+</ParamField>
+
+<ParamField body="bump" type="u8">
+  PDA bump seed.
+</ParamField>
+
+## PDA Derivation
+
+The user position account is a PDA derived from:
+
+```
+[POSITION_SEED_PREFIX, pair, owner]
+```
+
+Where `POSITION_SEED_PREFIX = b"gamm_position"`.
+
+## Key Methods
+
+### `calculate_debt0(total_debt0: u64, total_debt0_shares: u64) -> Result<u64>`
+Calculates the actual debt0 amount (including accrued interest) from debt shares.
+
+### `calculate_debt1(total_debt1: u64, total_debt1_shares: u64) -> Result<u64>`
+Calculates the actual debt1 amount (including accrued interest) from debt shares.
+
+### `get_remaining_borrow_limit(pair: &Pair, debt_token: &Pubkey, applied_min_cf_bps: u16) -> Result<u64>`
+Calculates the remaining borrow limit for a given debt token.
+
+### `get_debt_utilization_bps(pair: &Pair, debt_token: &Pubkey) -> Result<u64>`
+Returns the debt utilization in basis points (debt / borrow power). Values > 10000 indicate undercollateralization.
+
+### `get_liquidation_price(pair: &Pair, debt_token: &Pubkey) -> Result<u64>`
+Returns the NAD-scaled liquidation price of the collateral. Returns `u64::MAX` if position is immediately unsafe, or `0` if there's no debt.
+
+### `increase_debt(pair: &mut Pair, debt_token: &Pubkey, amount: u64) -> Result<()>`
+Increases debt by minting new debt shares proportionally.
+
+### `decrease_debt(pair: &mut Pair, debt_token: &Pubkey, amount: u64) -> Result<()>`
+Decreases debt by burning debt shares proportionally.
+
+### `writeoff_debt(pair: &mut Pair, debt_token: &Pubkey) -> Result<()>`
+Writes off all debt for a token (used in liquidations).
+

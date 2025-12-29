@@ -1,0 +1,53 @@
+---
+title: "Generalized Automated Market Maker (GAMM)"
+description: "Detailed explanation of Omnipair's GAMM model."
+---
+
+![Placeholder Gamm Architecture8](/images/placeholder-gamm-architecture8.svg)
+
+Omnipair is powered by a Generalized Automated Market Maker (GAMM), a primitive that combines constant-product AMM functionality with isolated lending logic. This allows a single pool to support both spot trading and margin borrowing without oracles or centralized risk config.
+
+Each pool holds a token pair and provides:
+
+- Swap functionality via spot prices
+- Margin borrowing based on time-weighted EMA prices
+- Interest accrual via utilization-based dynamic rates
+- Liquidation through write-offs and streaming collateral
+
+Each pool is defined by two tokens ($x$, $y$). Liquidity is added in a constant product — $(xy = k)$ where $k = L^2$ — fashion, and reserves are tracked. Each pool contains two types of reserves:
+
+- **Virtual Reserve**
+- **Actual Reserve**
+
+## Spot Price
+
+Derived from the pool's token virtual reserves:
+
+$$
+\text{Spot Price }_{0 \rightarrow 1} = \frac{\text{Virtual Reserve}_1}{\text{Virtual Reserve}_0}
+$$
+
+Used for swap execution and is updated by every spot trade, while lent liquidity is not calculated in the virtual reserves:
+
+$$
+\text{Reserve}_{actual} = \text{Reserve}_{virtual} - \text{Reserve}_{debt}
+$$
+
+## Time-weighted EMA Price (Lending price)
+
+A time-weighted Exponential Moving Average of the spot price. EMA pricing smooths volatility and prevents manipulation around liquidation events.
+
+$$
+\text{EMA}(t) = \alpha \cdot \text{Price}(t) + (1 - \alpha) \cdot \text{EMA}(t - 1)
+$$
+
+Where:
+
+$$
+\alpha = 1 - e^{-\frac{\Delta t}{\tau}}
+$$
+
+- $\Delta t$: Time since last update
+- $(\tau)$: Exponential decay constant (half-life converted to continuous time)
+
+This price is used to compute borrowing power and liquidation thresholds.

@@ -1,0 +1,45 @@
+---
+title: "Borrowing"
+description: "How to borrow assets using Omnipair."
+---
+
+## Overview
+
+Omnipair allows users to borrow assets against collateral within **isolated, pair-specific markets**. Unlike traditional lending protocols, Omnipair does not rely on governance whitelists or external price oracles, so any SPL pair with liquidity can form its own borrowing market, governed entirely by that market's dynamics.
+
+## How Borrowing Works
+
+To borrow an asset, a user follows these steps:
+
+1. Select a market (token pair)
+2. Deposit Token0 or Token1 as collateral
+3. Borrow the paired asset against that collateral
+4. Maintain sufficient collateral to stay above liquidation thresholds
+
+Once borrowed, assets are transferred to the borrower’s wallet and accrue interest until repaid.
+
+## Limits & Constraints
+
+Borrowing limits are enforced primarily through the Collateral Factor (CF) of a pool, which caps how much can be borrowed relative to deposited collateral.
+
+Borrowing capacity is determined by:
+
+- The market's Collateral Factor (CF)
+- Available borrow liquidity in the pool
+- Price movement within the selected market
+
+Each market operates independently, so borrowing limits and capacity vary by token pair.
+
+## Managing a Borrowing Position
+
+Borrowing positions can be adjusted over time:
+
+- **Reduce debt** by repaying borrowed assets
+- **Increase borrowing capacity** by adding more collateral
+- **Close a position** by fully repaying debt and withdrawing collateral
+
+All position management actions occur within the same isolated market.
+
+## Summary
+
+Omnipair allows users to borrow against long-tail and emerging tokens that are typically excluded from traditional lending protocols. Each market independently prices risk and borrowing capacity, allowing token utility to form organically wherever liquidity exists.

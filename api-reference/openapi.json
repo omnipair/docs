@@ -1,0 +1,439 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Omnipair Solana Program",
+    "description": "Oracle-less lending protocol on Solana with integrated AMM",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.mainnet-beta.solana.com",
+      "description": "Mainnet"
+    },
+    {
+      "url": "https://api.devnet.solana.com",
+      "description": "Devnet"
+    }
+  ],
+  "paths": {
+    "/initialize": {
+      "post": {
+        "summary": "Initialize a new trading pair",
+        "description": "Creates a new trading pair and optionally adds initial liquidity in a single transaction.",
+        "operationId": "initialize",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitializeAndBootstrapArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pair initialized successfully"
+          }
+        }
+      }
+    },
+    "/addLiquidity": {
+      "post": {
+        "summary": "Add liquidity to a pair",
+        "description": "Adds liquidity to an existing pair and receives LP tokens in return.",
+        "operationId": "addLiquidity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLiquidityArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Liquidity added successfully"
+          }
+        }
+      }
+    },
+    "/removeLiquidity": {
+      "post": {
+        "summary": "Remove liquidity from a pair",
+        "description": "Removes liquidity from a pair by burning LP tokens and receiving the underlying tokens.",
+        "operationId": "removeLiquidity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveLiquidityArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Liquidity removed successfully"
+          }
+        }
+      }
+    },
+    "/swap": {
+      "post": {
+        "summary": "Swap tokens",
+        "description": "Performs a token swap using the constant-product AMM formula.",
+        "operationId": "swap",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwapArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Swap executed successfully"
+          }
+        }
+      }
+    },
+    "/addCollateral": {
+      "post": {
+        "summary": "Add collateral to a position",
+        "description": "Adds collateral to a user's position, enabling borrowing against it.",
+        "operationId": "addCollateral",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustPositionArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collateral added successfully"
+          }
+        }
+      }
+    },
+    "/removeCollateral": {
+      "post": {
+        "summary": "Remove collateral from a position",
+        "description": "Removes collateral from a user's position. The position must remain properly collateralized after removal.",
+        "operationId": "removeCollateral",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustPositionArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collateral removed successfully"
+          }
+        }
+      }
+    },
+    "/borrow": {
+      "post": {
+        "summary": "Borrow tokens",
+        "description": "Borrows tokens from the pool's reserves against deposited collateral.",
+        "operationId": "borrow",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustPositionArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Borrow executed successfully"
+          }
+        }
+      }
+    },
+    "/repay": {
+      "post": {
+        "summary": "Repay borrowed debt",
+        "description": "Repays borrowed debt, reducing the user's debt position.",
+        "operationId": "repay",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustPositionArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Debt repaid successfully"
+          }
+        }
+      }
+    },
+    "/liquidate": {
+      "post": {
+        "summary": "Liquidate an undercollateralized position",
+        "description": "Liquidates an undercollateralized position by writing off debt and streaming collateral to the pool.",
+        "operationId": "liquidate",
+        "responses": {
+          "200": {
+            "description": "Liquidation executed successfully"
+          }
+        }
+      }
+    },
+    "/flashloan": {
+      "post": {
+        "summary": "Flash loan",
+        "description": "Borrows tokens from the pool that must be repaid (with fee) in the same transaction via a callback.",
+        "operationId": "flashloan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlashloanArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Flash loan executed successfully"
+          }
+        }
+      }
+    },
+    "/initFutarchyAuthority": {
+      "post": {
+        "summary": "Initialize futarchy authority",
+        "description": "Initializes the futarchy authority account that controls protocol governance and fee distribution.",
+        "operationId": "initFutarchyAuthority",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitFutarchyAuthorityArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Futarchy authority initialized successfully"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InitializeAndBootstrapArgs": {
+        "type": "object",
+        "required": ["swap_fee_bps", "half_life", "params_hash", "version", "amount0_in", "amount1_in", "min_liquidity_out", "lp_name", "lp_symbol", "lp_uri"],
+        "properties": {
+          "swap_fee_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Swap fee in basis points (0-10000)",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "half_life": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "EMA half-life in seconds (60-43200)",
+            "minimum": 60,
+            "maximum": 43200
+          },
+          "fixed_cf_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "nullable": true,
+            "description": "Optional fixed collateral factor in basis points (100-10000)"
+          },
+          "params_hash": {
+            "type": "string",
+            "format": "byte",
+            "description": "SHA256 hash of pair parameters"
+          },
+          "version": {
+            "type": "integer",
+            "format": "uint8",
+            "description": "Protocol version",
+            "default": 1
+          },
+          "amount0_in": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Initial amount of token0 to deposit"
+          },
+          "amount1_in": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Initial amount of token1 to deposit"
+          },
+          "min_liquidity_out": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Minimum LP tokens to receive"
+          },
+          "lp_name": {
+            "type": "string",
+            "description": "LP token name (max 32 ASCII characters)",
+            "maxLength": 32
+          },
+          "lp_symbol": {
+            "type": "string",
+            "description": "LP token symbol (max 10 ASCII characters)",
+            "maxLength": 10
+          },
+          "lp_uri": {
+            "type": "string",
+            "description": "LP token metadata URI (max 200 characters, must start with 'http')",
+            "maxLength": 200
+          }
+        }
+      },
+      "AddLiquidityArgs": {
+        "type": "object",
+        "required": ["amount0_in", "amount1_in", "min_liquidity_out"],
+        "properties": {
+          "amount0_in": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Amount of token0 to deposit"
+          },
+          "amount1_in": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Amount of token1 to deposit"
+          },
+          "min_liquidity_out": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Minimum LP tokens to receive"
+          }
+        }
+      },
+      "RemoveLiquidityArgs": {
+        "type": "object",
+        "required": ["liquidity", "min_amount0_out", "min_amount1_out"],
+        "properties": {
+          "liquidity": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Amount of LP tokens to burn"
+          },
+          "min_amount0_out": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Minimum amount of token0 to receive"
+          },
+          "min_amount1_out": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Minimum amount of token1 to receive"
+          }
+        }
+      },
+      "SwapArgs": {
+        "type": "object",
+        "required": ["amount_in", "min_amount_out"],
+        "properties": {
+          "amount_in": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Amount of input token to swap"
+          },
+          "min_amount_out": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Minimum amount of output token to receive"
+          }
+        }
+      },
+      "AdjustPositionArgs": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Amount to adjust. Use u64::MAX for maximum operations."
+          }
+        }
+      },
+      "FlashloanArgs": {
+        "type": "object",
+        "required": ["amount", "receiver_instruction"],
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "Amount to flash loan"
+          },
+          "receiver_instruction": {
+            "type": "string",
+            "format": "byte",
+            "description": "Serialized instruction data for flashloan receiver program"
+          }
+        }
+      },
+      "InitFutarchyAuthorityArgs": {
+        "type": "object",
+        "required": ["swap_bps", "interest_bps", "futarchy_treasury_bps", "buybacks_vault_bps", "team_treasury_bps"],
+        "properties": {
+          "swap_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Swap fee revenue share in basis points (0-10000)"
+          },
+          "interest_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Interest fee revenue share in basis points (0-10000)"
+          },
+          "futarchy_treasury_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Distribution percentage for futarchy treasury in basis points"
+          },
+          "buybacks_vault_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Distribution percentage for buybacks vault in basis points"
+          },
+          "team_treasury_bps": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Distribution percentage for team treasury in basis points"
+          }
+        }
+      }
+    }
+  }
+}

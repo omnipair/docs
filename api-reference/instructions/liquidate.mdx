@@ -1,0 +1,84 @@
+---
+title: 'Liquidate'
+description: 'Liquidate an undercollateralized position'
+---
+
+# Liquidate
+
+Liquidates an undercollateralized position by writing off debt and streaming collateral to the pool.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account.
+</ParamField>
+
+<ParamField body="user_position" type="Account<UserPosition>" required>
+  The undercollateralized position to liquidate.
+</ParamField>
+
+<ParamField body="collateral_vault" type="InterfaceAccount<TokenAccount>" required>
+  The pair vault for the collateral token.
+</ParamField>
+
+<ParamField body="debt_vault" type="InterfaceAccount<TokenAccount>" required>
+  The pair vault for the debt token.
+</ParamField>
+
+<ParamField body="liquidator_collateral_account" type="InterfaceAccount<TokenAccount>" required>
+  Liquidator's collateral token account. Will receive liquidation incentive.
+</ParamField>
+
+<ParamField body="liquidator" type="Signer" required>
+  The liquidator. Must be a signer.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let accounts = Liquidate {
+    pair: pair_pda,
+    user_position: undercollateralized_position_pda,
+    collateral_vault: token0_vault,
+    debt_vault: token1_vault,
+    liquidator_collateral_account: liquidator_token0_account,
+    liquidator: liquidator.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::liquidate(ctx)?;
+```
+
+```typescript
+import { Program } from '@coral-xyz/anchor';
+
+await program.methods
+  .liquidate()
+  .accounts({
+    pair: pairPda,
+    userPosition: undercollateralizedPositionPda,
+    collateralVault: token0Vault,
+    debtVault: token1Vault,
+    liquidatorCollateralAccount: liquidatorToken0Account,
+    liquidator: liquidator.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

@@ -1,0 +1,104 @@
+---
+title: 'Add Liquidity'
+description: 'Add liquidity to an existing trading pair'
+---
+
+# Add Liquidity
+
+Adds liquidity to an existing pair and receives LP tokens in return.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account. PDA derived from `[PAIR_SEED_PREFIX, token0, token1, params_hash]`.
+</ParamField>
+
+<ParamField body="user_token0_account" type="InterfaceAccount<TokenAccount>" required>
+  User's token0 account. Must have sufficient balance for `amount0_in`.
+</ParamField>
+
+<ParamField body="user_token1_account" type="InterfaceAccount<TokenAccount>" required>
+  User's token1 account. Must have sufficient balance for `amount1_in`.
+</ParamField>
+
+<ParamField body="user_lp_token_account" type="InterfaceAccount<TokenAccount>" required>
+  User's LP token account. Will receive minted LP tokens.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user adding liquidity. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="amount0_in" type="u64" required>
+  Amount of token0 to deposit. Must be greater than 0.
+</ParamField>
+
+<ParamField body="amount1_in" type="u64" required>
+  Amount of token1 to deposit. Must be greater than 0.
+</ParamField>
+
+<ParamField body="min_liquidity_out" type="u64" required>
+  Minimum LP tokens to receive. Used for slippage protection.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let add_liquidity_args = AddLiquidityArgs {
+    amount0_in: 100 * 10u64.pow(token0_decimals),
+    amount1_in: 200 * 10u64.pow(token1_decimals),
+    min_liquidity_out: 0,
+};
+
+let accounts = AdjustLiquidity {
+    pair: pair_pda,
+    user_token0_account: user_token0_account,
+    user_token1_account: user_token1_account,
+    user_lp_token_account: user_lp_token_account,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::add_liquidity(ctx, add_liquidity_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+const addLiquidityArgs = {
+  amount0In: new BN(100 * 10 ** token0Decimals),
+  amount1In: new BN(200 * 10 ** token1Decimals),
+  minLiquidityOut: new BN(0)
+};
+
+await program.methods
+  .addLiquidity(addLiquidityArgs)
+  .accounts({
+    pair: pairPda,
+    userToken0Account: userToken0Account,
+    userToken1Account: userToken1Account,
+    userLpTokenAccount: userLpTokenAccount,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

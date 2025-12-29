@@ -1,0 +1,92 @@
+---
+title: 'Remove Collateral'
+description: 'Remove collateral from a user position'
+---
+
+# Remove Collateral
+
+Removes collateral from a user's position. The position must remain properly collateralized after removal.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account.
+</ParamField>
+
+<ParamField body="user_position" type="Account<UserPosition>" required>
+  The user's position account.
+</ParamField>
+
+<ParamField body="collateral_vault" type="InterfaceAccount<TokenAccount>" required>
+  The pair vault for the collateral token.
+</ParamField>
+
+<ParamField body="user_collateral_token_account" type="InterfaceAccount<TokenAccount>" required>
+  User's collateral token account. Will receive removed collateral.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user removing collateral. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="amount" type="u64" required>
+  Amount of collateral to remove. Must be greater than 0.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let remove_collateral_args = AdjustPositionArgs {
+    amount: 200 * 10u64.pow(collateral_token_decimals),
+};
+
+let accounts = CommonAdjustPosition {
+    pair: pair_pda,
+    user_position: user_position_pda,
+    token_vault: collateral_vault,
+    user_token_account: user_collateral_token_account,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::remove_collateral(ctx, remove_collateral_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+const removeCollateralArgs = {
+  amount: new BN(200 * 10 ** collateralTokenDecimals)
+};
+
+await program.methods
+  .removeCollateral(removeCollateralArgs)
+  .accounts({
+    pair: pairPda,
+    userPosition: userPositionPda,
+    tokenVault: collateralVault,
+    userTokenAccount: userCollateralTokenAccount,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

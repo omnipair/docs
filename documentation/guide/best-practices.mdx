@@ -1,0 +1,196 @@
+---
+title: "Best Practices"
+description: "A guide to using Omnipair responsibly. "
+---
+
+## General Guidelines
+
+### Start Small
+
+- Begin with small position sizes when using a new market
+- Familiarize yourself with how swaps, borrowing, and liquidity interact
+- Scale positions gradually as you gain confidence
+
+### Understand the Market You Interact With
+
+Before interacting with a market:
+
+- Review available liquidity
+- Check the pool's Collateral Factor (CF)
+- Consider asset volatility and correlation
+- Observe current utilization levels
+
+### Stay Informed
+
+Recommended actions:
+
+- Follow official Omnipair communication channels
+- Monitor protocol updates and parameter changes
+- Participate in community discussions where relevant
+
+## Trading Best Practices
+
+### Slippage Awareness
+
+Set appropriate slippage:
+
+- Small trades: 0.5-1% slippage
+- Medium trades: 1-2% slippage
+- Large trades: 2-5% slippage (or split into smaller trades)
+
+Recommended Actions:
+
+- Always review price impact before confirming
+- Be cautious in low-liquidity or volatile markets
+
+### Market Selection
+
+Best Practices:
+
+- Prefer deeper markets for larger trades
+- Be cautious when trading long-tail assets with limited liquidity
+- Avoid trading during extreme volatility unless intentional
+
+## Liquidity Provision Best Practices
+
+### Choosing Markets
+
+When providing liquidity, consider:
+
+- Historical trading activity
+- Borrowing demand (which drives interest accrual)
+- Asset volatility and correlation
+- Your desired risk and exposure duration
+
+### Managing LP Positions
+
+What to Monitor:
+
+- Pool utilization
+- Fee and interest accumulation
+- Changes in pool composition
+
+Mitigation Strategies:
+
+- Avoid over-allocating to a single market
+- Reassess positions as utilization changes
+- Prefer markets where both swap and borrowing demand exist
+
+### Understanding Impermanent Loss
+
+What to Expect:
+
+- IL occurs when asset prices diverge
+- More pronounced in volatile or uncorrelated pairs
+
+Mitigation:
+
+- Choose more correlated assets where possible
+- Consider shorter LP durations in volatile markets
+- IL is partially offset through combined swap fees and borrowing interest
+
+## Borrowing Best Practices
+
+### Collateral Management
+
+Best Practices:
+
+- Avoid borrowing at maximum capacity
+- Maintain a healthy buffer above minimum requirements
+- Monitor collateral value relative to borrowed assets
+
+Mitigation:
+
+- Add collateral early rather than reacting late
+- Reduce debt during periods of rising volatility
+
+### Utilization Awareness
+
+What to Monitor:
+
+- Rising utilization increases interest rates
+- High utilization can reduce withdrawal flexibility
+
+Mitigation:
+
+- Monitor utilization trends before borrowing
+- Repay or resize positions if utilization spikes
+- Prefer borrowing in markets with balanced supply and demand
+
+## Leveraging Best Practices
+
+### Position Sizing
+
+Best Practices:
+
+- Start with low leverage
+- Increase exposure incrementally rather than in one loop
+- Ensure you understand how recursion affects position size
+
+### Managing Positions
+
+What to Monitor:
+
+- Borrowed amount relative to collateral
+- Remaining collateral headroom
+- Changes in market utilization
+
+Mitigation:
+
+- Add collateral early instead of reacting near limits
+- Repay portions of debt to reduce exposure
+- Gradually unwind positions rather than exiting in a single transaction
+
+### Adjusting and Exiting Positions
+
+Plan Ahead:
+
+- Define conditions under which you will reduce or close leverage
+- Avoid adjusting positions during extreme volatility
+- Be aware that higher utilization can affect execution when unwinding
+
+Mitigation:
+
+- Close leverage incrementally where possible
+- Monitor pool conditions before large adjustments
+- Keep sufficient liquidity available to repay borrowed assets
+
+## Security and Interaction Safety
+
+### Wallet Security
+
+Best Practices:
+
+- Use reputable Solana wallets
+- Secure private keys and recovery phrases
+- Avoid interacting with unverified links
+
+### Transaction Review
+
+Always Verify:
+
+- Token pairs and amounts
+- Slippage settings
+- Expected outputs before confirmation
+
+Best Practices:
+
+- Pause before signing any transaction
+- Reject transactions that do not match your intent
+
+## Common Mistakes to Avoid
+
+### Overextending Positions
+
+Avoid:
+
+- Maxing out borrowing or leverage capacity
+- Assuming all markets behave similarly
+- Ignoring pool-specific market dynamics
+
+### Reactive Decision-Making
+
+Best Practices:
+
+- Plan position sizes and exit paths in advance
+- Avoid emotional responses to short-term price movement

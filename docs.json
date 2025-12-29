@@ -1,0 +1,205 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "almond",
+  "name": "Omnipair Docs",
+  "colors": {
+    "primary": "#3C64FF",
+    "light": "#6597FF",
+    "dark": "#243FD9"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "icon": "github",
+          "hidden": true,
+          "href": "https://github.com/omnipair"
+        },
+        {
+          "anchor": "Discord",
+          "icon": "discord",
+          "hidden": true,
+          "href": "https://discord.gg/omnipair"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "index",
+              "introduction",
+              "omnipair/problem",
+              "omnipair/solution"
+            ]
+          },
+          {
+            "group": "Guide",
+            "pages": [
+              "documentation/guide/getting-started",
+              {
+                "group": "Use Cases",
+                "pages": [
+                  "use-cases/borrowing",
+                  "use-cases/leveraging",
+                  "use-cases/liquidity-provisioning-earn"
+                ]
+              },
+              "documentation/guide/best-practices"
+            ]
+          },
+          {
+            "group": "Protocol",
+            "pages": [
+              "technical-breakdown/overview",
+              "technical-breakdown/generalized-automated-market-maker",
+              "technical-breakdown/slippage-aware-collateral-factor",
+              "technical-breakdown/liquidations-debt-write-off",
+              "technical-breakdown/risk-and-safe-design",
+              "technical-breakdown/customizable-pools"
+            ]
+          },
+          {
+            "group": "Governance",
+            "pages": [
+              "governance/what-is-omfg",
+              "governance/governance-model",
+              "governance/protocol-governable-parameters"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "documentation/resources/first-link",
+              "documentation/resources/untitled-page",
+              "documentation/resources/risks",
+              "documentation/resources/addresses",
+              "documentation/resources/parameters",
+              "documentation/resources/access-controls",
+              "documentation/resources/code-licensing",
+              "documentation/resources/glossary",
+              "documentation/resources/links"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Code Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/quickstart",
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "Instructions",
+            "pages": [
+              {
+                "group": "Liquidity",
+                "pages": [
+                  "api-reference/instructions/initialize",
+                  "api-reference/instructions/add-liquidity",
+                  "api-reference/instructions/remove-liquidity"
+                ]
+              },
+              {
+                "group": "Spot Trading",
+                "pages": [
+                  "api-reference/instructions/swap"
+                ]
+              },
+              {
+                "group": "Lending",
+                "pages": [
+                  "api-reference/instructions/add-collateral",
+                  "api-reference/instructions/remove-collateral",
+                  "api-reference/instructions/borrow",
+                  "api-reference/instructions/repay",
+                  "api-reference/instructions/liquidate",
+                  "api-reference/instructions/flashloan"
+                ]
+              },
+              {
+                "group": "Futarchy",
+                "pages": [
+                  "api-reference/instructions/init-futarchy-authority"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Accounts",
+            "pages": [
+              "api-reference/accounts/pair",
+              "api-reference/accounts/user-position",
+              "api-reference/accounts/futarchy-authority",
+              "api-reference/accounts/rate-model"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "api-reference/errors",
+              "api-reference/constants"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "https://discord.gg/omnipair"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Launch App",
+      "href": "https://app.omnipair.fi"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/omnipair",
+      "github": "https://github.com/omnipair",
+      "discord": "https://discord.gg/omnipair"
+    }
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "background": {
+    "decoration": "gradient"
+  },
+  "description": "Omnipair enables permissionless spot and margin trading without oracles, using isolated collateral pools and on-chain mechanisms to support long-tail markets on Solana.",
+  "thumbnails": {
+    "background": "/images/hero-dark.svg"
+  },
+  "styling": {
+    "eyebrows": "section"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  }
+}

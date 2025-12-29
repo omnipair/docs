@@ -1,0 +1,41 @@
+---
+title: "What is Omnipair?"
+---
+
+## Overview
+
+Omnipair is a decentralized [hyperstructure](https://nicogs.medium.com/hyperstructures-5e6f36c2c82b) protocol for spot & margin trading designed for permissionless, oracle-less, and isolated-collateral markets. It enables anyone to lend, borrow, and trade long-tail assets with leverage, without relying on governance whitelists, external oracles, or centralized risk management.
+
+Built on Solana and powered by a novel [Generalized Automated Market Maker (GAMM)](/technical-breakdown/generalized-automated-market-maker) model, Omnipair introduces a mechanism where liquidity is not only used for swaps but also natively lent out to borrowers, maximizing capital efficiency in every pool.
+
+## Why?
+
+Today, most money markets and margin trading options in DeFi are:
+
+- **Permissioned**: Teams must approve assets before they can be used.
+- **Oracle-reliant**: Introduces attack vectors and external dependencies.
+- **Inefficient**:
+  - AMMs leave liquidity idle;
+  - Lending markets are isolated and cannot operate without external makers.
+
+These constraints especially affect long-tail assets that lack deep integrations but command real market demand.
+
+More details in [Problem](/omnipair/problem)
+
+## How?
+
+- **GAMM**: Coupled spot trading and lending in one entity / pool.
+- **Oracle-less EMA pricing**: EMA replaces oracles for debt pricing.
+- **Slippage-aware Dynamic Collateral Factor**: Derived from xy=k variant to ensure lending doesn't break the AMM invariant.
+- **Streaming liquidations**: Collateral is streamed to the pool over time.
+- **Recursive leverage**: Leverage is achieved via in-protocol recursive borrowing (looping).
+
+Find more details in [Technical Breakdown](/technical-breakdown/overview)
+
+## Vision
+
+Omnipair believes the next era of onchain finance must be permissionless across the entire stack, driven by isolated market dynamics where any asset with liquidity can become its own collateral market by default. 
+
+This is the Uniswap moment for lending: turning fragmented, permissioned credit rails into unified markets that anyone can create in seconds without relying on oracles or governance decisions. 
+
+## Demo Video

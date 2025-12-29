@@ -1,0 +1,104 @@
+---
+title: 'Borrow'
+description: 'Borrow tokens against collateral'
+---
+
+# Borrow
+
+Borrows tokens from the pool's reserves against deposited collateral.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account.
+</ParamField>
+
+<ParamField body="user_position" type="Account<UserPosition>" required>
+  The user's position account.
+</ParamField>
+
+<ParamField body="token_vault" type="InterfaceAccount<TokenAccount>" required>
+  The pair vault for the debt token (the token being borrowed).
+</ParamField>
+
+<ParamField body="user_token_account" type="InterfaceAccount<TokenAccount>" required>
+  User's token account for the debt token. Will receive borrowed tokens.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user borrowing. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="amount" type="u64" required>
+  Amount to borrow. Use `u64::MAX` to borrow maximum available. Must be greater than 0 otherwise.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+// Borrow specific amount
+let borrow_args = AdjustPositionArgs {
+    amount: 500 * 10u64.pow(debt_token_decimals),
+};
+
+// Or borrow maximum available
+let max_borrow_args = AdjustPositionArgs {
+    amount: u64::MAX,
+};
+
+let accounts = CommonAdjustPosition {
+    pair: pair_pda,
+    user_position: user_position_pda,
+    token_vault: debt_token_vault,
+    user_token_account: user_debt_token_account,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::borrow(ctx, borrow_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+// Borrow specific amount
+const borrowArgs = {
+  amount: new BN(500 * 10 ** debtTokenDecimals)
+};
+
+// Or borrow maximum available
+const maxBorrowArgs = {
+  amount: new BN(Number.MAX_SAFE_INTEGER) // u64::MAX
+};
+
+await program.methods
+  .borrow(borrowArgs)
+  .accounts({
+    pair: pairPda,
+    userPosition: userPositionPda,
+    tokenVault: debtTokenVault,
+    userTokenAccount: userDebtTokenAccount,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

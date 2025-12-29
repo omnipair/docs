@@ -1,0 +1,116 @@
+---
+title: 'Init Futarchy Authority'
+description: 'Initialize the futarchy authority account'
+---
+
+# Init Futarchy Authority
+
+Initializes the futarchy authority account that controls protocol governance and fee distribution.
+
+## Accounts
+
+<ParamField body="authority" type="Signer" required>
+  The authority that will control the futarchy authority. Must be a signer.
+</ParamField>
+
+<ParamField body="futarchy_authority" type="Account<FutarchyAuthority>" required>
+  The futarchy authority account to initialize. PDA derived from `[FUTARCHY_AUTHORITY_SEED_PREFIX]`.
+</ParamField>
+
+<ParamField body="futarchy_treasury" type="UncheckedAccount" required>
+  Treasury account for futarchy revenue.
+</ParamField>
+
+<ParamField body="buybacks_vault" type="UncheckedAccount" required>
+  Vault account for buyback operations.
+</ParamField>
+
+<ParamField body="team_treasury" type="UncheckedAccount" required>
+  Team treasury account.
+</ParamField>
+
+## Arguments
+
+<ParamField body="swap_bps" type="u16" required>
+  Swap fee revenue share in basis points (0-10000). Portion of swap fees that go to protocol.
+</ParamField>
+
+<ParamField body="interest_bps" type="u16" required>
+  Interest fee revenue share in basis points (0-10000). Portion of interest that goes to protocol.
+</ParamField>
+
+<ParamField body="futarchy_treasury_bps" type="u16" required>
+  Distribution percentage for futarchy treasury in basis points.
+</ParamField>
+
+<ParamField body="buybacks_vault_bps" type="u16" required>
+  Distribution percentage for buybacks vault in basis points.
+</ParamField>
+
+<ParamField body="team_treasury_bps" type="u16" required>
+  Distribution percentage for team treasury in basis points.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let init_args = InitFutarchyAuthorityArgs {
+    swap_bps: 1000, // 10% of swap fees
+    interest_bps: 500, // 5% of interest
+    futarchy_treasury_bps: 4000, // 40%
+    buybacks_vault_bps: 3000, // 30%
+    team_treasury_bps: 3000, // 30%
+};
+
+let accounts = InitFutarchyAuthority {
+    authority: deployer.key(),
+    futarchy_authority: futarchy_authority_pda,
+    futarchy_treasury: futarchy_treasury_key,
+    buybacks_vault: buybacks_vault_key,
+    team_treasury: team_treasury_key,
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::init_futarchy_authority(ctx, init_args)?;
+```
+
+```typescript
+import { Program } from '@coral-xyz/anchor';
+
+const initArgs = {
+  swapBps: 1000, // 10% of swap fees
+  interestBps: 500, // 5% of interest
+  futarchyTreasuryBps: 4000, // 40%
+  buybacksVaultBps: 3000, // 30%
+  teamTreasuryBps: 3000 // 30%
+};
+
+await program.methods
+  .initFutarchyAuthority(initArgs)
+  .accounts({
+    authority: deployer.publicKey,
+    futarchyAuthority: futarchyAuthorityPda,
+    futarchyTreasury: futarchyTreasuryKey,
+    buybacksVault: buybacksVaultKey,
+    teamTreasury: teamTreasuryKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>

@@ -1,0 +1,41 @@
+---
+title: "Solution"
+description: "Omnipair's approach to addressing DeFi trading challenges."
+---
+
+## Solution Overview
+
+Omnipair is powered by a [Generalized Automated Market Maker (GAMM)](/technical-breakdown/generalized-automated-market-maker), a primitive that combines constant-product AMM functionality with isolated lending logic. This allows a single pool to support both spot trading and margin borrowing without oracles or centralized risk config.
+
+Each pool holds a token pair and provides:
+
+- Swap functionality via spot prices
+- Margin borrowing based on time-weighted EMA prices
+- Interest accrual via utilization-based dynamic rates
+- Liquidation through write-offs and streaming collateral
+
+![GAMM Pool Overview](https://2535276810-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FNZn9gOHBT8UgOfu2lGuO%2Fuploads%2FNkKMgMwLyMgCn1C9iSSI%2Fgamm.png?alt=media&token=1e546252-caf5-4156-9177-ded96d3619dc)
+
+## Use cases
+
+Omnipair opens up entirely new possibilities for traders, liquidity providers (LPs), and projects by integrating spot trading and margin lending into unified, permissionless pools. Below are the primary use cases, each uniquely enabled by Omnipair's GAMM architecture.
+
+### For Traders
+
+- Long, short, borrow or lend any token
+- Use memecoins or long-tail tokens as collateral
+- Avoid centralized listings or governance delays
+
+More on [Leveraging](/use-cases/leveraging) and [Borrowing](/use-cases/borrowing).
+
+### For LPs
+
+- Earn fees from both trading and borrowing
+- Idle capital is automatically put to work
+
+See details on [Liquidity Provisioning (Earn)](/use-cases/liquidity-provisioning-earn)
+
+### For Projects
+
+- Bootstrap lending and trading on their own token
+- No need to wait for oracle integrations or listings

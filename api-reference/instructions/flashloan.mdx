@@ -1,0 +1,100 @@
+---
+title: 'Flash Loan'
+description: 'Borrow tokens that must be repaid in the same transaction'
+---
+
+# Flash Loan
+
+Borrows tokens from the pool that must be repaid (with fee) in the same transaction via a callback.
+
+## Accounts
+
+<ParamField body="pair" type="Account<Pair>" required>
+  The pair account.
+</ParamField>
+
+<ParamField body="token_vault" type="InterfaceAccount<TokenAccount>" required>
+  The pair vault for the flash loan token.
+</ParamField>
+
+<ParamField body="user_token_account" type="InterfaceAccount<TokenAccount>" required>
+  User's token account. Will receive flash loan and must repay from here.
+</ParamField>
+
+<ParamField body="flashloan_receiver_program" type="Program" required>
+  The program that will receive the flash loan callback. Must implement the flashloan receiver interface.
+</ParamField>
+
+<ParamField body="user" type="Signer" required>
+  The user requesting the flash loan. Must be a signer.
+</ParamField>
+
+## Arguments
+
+<ParamField body="amount" type="u64" required>
+  Amount to flash loan. Must be greater than 0.
+</ParamField>
+
+<ParamField body="receiver_instruction" type="Vec<u8>" required>
+  Serialized instruction data to pass to the flashloan receiver program.
+</ParamField>
+
+<RequestExample>
+
+```rust
+use anchor_lang::prelude::*;
+use omnipair::program::Omnipair;
+
+let flashloan_args = FlashloanArgs {
+    amount: 10000 * 10u64.pow(token_decimals),
+    receiver_instruction: receiver_ix_data,
+};
+
+let accounts = Flashloan {
+    pair: pair_pda,
+    token_vault: token1_vault,
+    user_token_account: user_token1_account,
+    flashloan_receiver_program: receiver_program_id,
+    flashloan_receiver_accounts: receiver_accounts,
+    user: user.key(),
+    // ... other accounts
+};
+
+let ctx = CpiContext::new(program_id, accounts);
+omnipair::cpi::flashloan(ctx, flashloan_args)?;
+```
+
+```typescript
+import { Program, BN } from '@coral-xyz/anchor';
+
+const flashloanArgs = {
+  amount: new BN(10000 * 10 ** tokenDecimals),
+  receiverInstruction: receiverIxData
+};
+
+await program.methods
+  .flashloan(flashloanArgs)
+  .accounts({
+    pair: pairPda,
+    tokenVault: token1Vault,
+    userTokenAccount: userToken1Account,
+    flashloanReceiverProgram: receiverProgramId,
+    flashloanReceiverAccounts: receiverAccounts,
+    user: user.publicKey,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmG5Rk88jH2k9f4w3JHFf7Pjsk3bWqeXrC",
+  "slot": 123456789
+}
+```
+
+</ResponseExample>
