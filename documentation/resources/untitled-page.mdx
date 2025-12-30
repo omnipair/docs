@@ -11,7 +11,7 @@ description: "Quick answers to common questions."
 
     Unlike traditional AMMs or lending protocols, Omnipair does not rely on governance whitelists or external price oracles. Any SPL token pair with liquidity can form its own market, with risk and pricing determined by that market’s dynamics.
   </Accordion>
-  <Accordion title="How is Omnipair different from a traditional AMM or lending protocol?">
+  <Accordion title="How does Omnipair differ from traditional AMMs or lending protocols?">
     Traditional AMMs are designed primarily for token swaps and do not support borrowing or leverage. Lending protocols, on the other hand, typically allow users to supply assets into shared pools that support borrowing across the entire system, often restricted to a curated list of assets. Omnipair combines these models into a single structure.
 
     Each market is isolated to a specific token pair and supports swaps, collateralized borrowing, leverage, and liquidity provision within the same pool. Risk, pricing, and borrowing capacity are determined locally by each market rather than globally across the protocol. This design allows long-tail and emerging assets to form money markets organically, without exposing the rest of the protocol to their risk.
@@ -83,7 +83,7 @@ description: "Quick answers to common questions."
     Swaps are executed directly against the liquidity in the selected market. Before confirming, users are shown the expected output amount, price impact, and any applicable fees so they can review execution conditions.
   </Accordion>
   <Accordion title="Is pricing different from regular AMMs?">
-    Omnipair's GAMM model uses constant-product AMM pricing (the x·y = k invariant) based on on-chain liquidity, similar to traditional AMMs. 
+    Omnipair's GAMM model uses constant-product AMM pricing (the x·y = k invariant) based on on-chain liquidity, similar to traditional AMMs.
 
     In addition, Omnipair applies EMA-based smoothing for risk-related calculations, such as borrowing limits and liquidations. While spot swaps reflect real-time liquidity conditions, these parameters influence how markets behave under volatility and affect capital availability within the pool.
   </Accordion>
@@ -113,7 +113,7 @@ description: "Quick answers to common questions."
     When a user supplies collateral, it remains locked in the market while the borrowed asset is transferred directly to the user’s wallet. The borrowed position accrues interest over time until it is repaid. All borrowing activity is confined to the specific market, meaning collateral, debt, and risk never extend beyond the selected token pair.
   </Accordion>
   <Accordion title="What determines how much I can borrow?">
-    The amount a user can borrow on Omnipair is determined by the value of their deposited collateral, the Collateral Factor (CF) of the market, and the price used to evaluate that collateral. Each market defines a maximum Collateral Factor, which caps how much value can be borrowed relative to the collateral supplied. 
+    The amount a user can borrow on Omnipair is determined by the value of their deposited collateral, the Collateral Factor (CF) of the market, and the price used to evaluate that collateral. Each market defines a maximum Collateral Factor, which caps how much value can be borrowed relative to the collateral supplied.
 
     To evaluate collateral safely, borrowing capacity is calculated using time-weighted EMA prices derived from the pool’s own liquidity. This smoothing mechanism reduces the impact of short-term price spikes or manipulation, ensuring that borrowing power adjusts gradually rather than instantly.
   </Accordion>
