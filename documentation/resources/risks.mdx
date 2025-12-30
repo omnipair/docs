@@ -7,15 +7,15 @@ Omnipair enables permissionless, oracleless money markets. The protocol is desig
 
 ### Smart Contract Risk
 
-As with any decentralized protocol, smart contracts may contain vulnerabilities, implementation limitations, or edge cases that could affect system behavior. To mitigate these risks, Omnipair’s protocol code has undergone multiple professional security audits, and any proposed changes to the protocol code are subject to extensive review and approval prior to implementation.
+Smart contracts may contain vulnerabilities, implementation limitations, or edge cases that could affect system behavior. To mitigate these risks, Omnipair’s protocol code has undergone multiple professional security audits, and any proposed changes to the protocol code are subject to extensive review and approval prior to implementation.
 
 ### Price Discovery Risk
 
 Asset prices within Omnipair markets are derived from on-chain liquidity and can change rapidly, especially for long-tail or newly issued tokens. Sudden price movements can affect collateral values, borrowing capacity and liquidation thresholds. Omnipair mitigates excessive sensitivity to short-term volatility by using time-weighted EMA pricing for all risk-critical calculations, including borrowing limits and liquidations. This smoothing mechanism reduces the impact of brief price spikes or manipulation while still allowing markets to respond to sustained changes in supply and demand.
 
-### Collateral Risk 
+### Collateral Risk
 
-Bad debt can arise when the market value of collateral declines faster than positions can be liquidated, causing outstanding borrows to exceed the value of locked collateral. This risk exists in any collateralized lending system, particularly during periods of high volatility or low liquidity. Omnipair manages collateral risk through isolated markets, ensuring that collateral shortfalls remain confined to the specific pool in which they occur. In cases where collateral is insufficient to fully cover outstanding borrows, losses are resolved at the pool level through adjustments to pool reserves. This design distributes losses proportionally among liquidity providers in that market and avoids preferential exits or bank-run dynamics.
+Bad debt can arise when the market value of collateral declines faster than positions can be liquidated, causing outstanding borrows to exceed the value of locked collateral. This risk exists particularly during periods of high volatility or low liquidity. Omnipair manages collateral risk through isolated markets, ensuring that collateral shortfalls remain confined to the specific pool in which they occur. In cases where collateral is insufficient to fully cover outstanding borrows, losses are resolved at the pool level through adjustments to pool reserves. This design distributes losses proportionally among liquidity providers in that market and avoids preferential exits or bank-run dynamics.
 
 ### Market-Specific Risk
 
