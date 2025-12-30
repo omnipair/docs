@@ -14,21 +14,21 @@ description: "Quick answers to common questions."
   <Accordion title="How does Omnipair differ from traditional AMMs or lending protocols?">
     Traditional AMMs are designed for token swaps and do not support borrowing or leverage. Lending protocols, on the other hand, typically allow users to supply assets into shared pools that support borrowing across the entire system, often restricted to a curated list of assets. Omnipair combines these models into a single structure.
 
-    Each market is isolated to a specific token pair and supports swaps, collateralized borrowing, leverage, and liquidity provision within the same pool. This design allows long-tail and emerging assets to form money markets organically, while maximizing capital efficiency in every pool. 
+    Each market is isolated to a specific token pair and supports swaps, borrowing, leverage, and liquidity provision within the same pool. This design allows long-tail and emerging assets to form money markets organically, while maximizing capital efficiency in every pool. 
   </Accordion>
   <Accordion title="Do I need a wallet to use Omnipair?">
     Yes. Omnipair is a non-custodial protocol, meaning users always retain control over their assets. To interact with Omnipair, you must connect a Solana-compatible wallet such as Phantom or Solflare. The wallet is used to sign transactions, manage assets, and interact with markets directly on-chain.
   </Accordion>
   <Accordion title="What blockchains does Omnipair support?">
-    Omnipair is currently deployed on Solana. The protocol is designed to leverage Solana’s high throughput and low transaction fees, which are critical for real-time market activity, frequent rebalancing, and complex actions such as borrowing and leverage.
+    Omnipair is currently deployed on Solana, and is designed to leverage Solana’s high throughput and low transaction fees. 
   </Accordion>
   <Accordion title="Can anyone create a market on Omnipair?">
-    Yes. Omnipair is fully permissionless. Any user can deploy a market for any SPL token pair by supplying initial liquidity and selecting market parameters at deployment.
+    Yes. Market creation is fully permissionless. Any user can deploy a market for any SPL token pair by supplying initial liquidity and selecting market parameters at deployment.
 
     There is no approval process, governance vote, or asset whitelist required. Once deployed, the market is immediately available for anyone to trade, provide liquidity, borrow, or open leveraged positions.
   </Accordion>
   <Accordion title="How do I interact with Omnipair?">
-    Users can interact with Omnipair through a user-friendly web interface or directly with its on-chain programs on Solana. This openness also enables developers to build third-party applications, integrations, and services that compose on top of Omnipair’s permissionless markets.
+    Users can interact with Omnipair through a user-friendly web interface or directly with its on-chain programs on Solana. This openness also enables developers to build integrations, third-party apps and services that compose on top of Omnipair’s architecture.
 
     To interact with Omnipair through the interface, simply connect a Solana-compatible wallet and select a market. From there, you can swap assets, provide liquidity, borrow against collateral, or create leveraged positions within that market. Assets supplied to a pool earn fees and interest based on market activity, and supplied collateral can be used to access borrowing and leverage within the same isolated pool.
   </Accordion>
@@ -229,7 +229,7 @@ description: "Quick answers to common questions."
     OMFG (Omnipair Futarchy Governance token) is the governance token of Omnipair. It empowers token holders to regulate the protocol’s high-level behavior without interfering with immutable smart contracts. OMFG holders are part of a two-layer governance model that balances market-driven decision-making with regulatory oversight while keeping markets permissionless and autonomous.
   </Accordion>
   <Accordion title="How does governance work on Omnipair? ">
-    Omnipair uses a layered governance model that separates market-driven behavior from protocol-level oversight. Higher-level protocol decisions are handled through futarchy-based governance on MetaDAO, where prediction markets are used to signal which proposals are expected to lead to better outcomes. Futarchy proposals are open to anyone and rely on market participation rather than token voting alone. 
+    Omnipair uses a layered governance model that separates market-driven behavior from protocol-level oversight. Higher-level protocol decisions are handled through futarchy-based governance on MetaDAO, where prediction markets are used to signal which proposals are expected to lead to better outcomes. Futarchy proposals are open to anyone and rely on market participation rather than token voting alone.
 
     In parallel, certain regulatory decisions and protocol authorities are reserved for OMFG holders through vote-based governance, providing oversight without interfering with deployed markets.
 
