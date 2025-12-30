@@ -76,7 +76,7 @@ description: "Quick answers to common questions."
 
 <AccordionGroup>
   <Accordion title="How does swapping work?">
-    Users can swap tokens by selecting the asset they want to swap from and then choosing an available paired asset that has an active market on Omnipair. Swaps can be executed through Omnipair’s user interface or  by interacting directly with the protocol’s smart contracts. 
+    Users can swap tokens by selecting the asset they want to swap from and then choosing an available paired asset that has an active market on Omnipair. Swaps can be executed through Omnipair’s user interface or  by interacting directly with the protocol’s smart contracts.
 
     Once a market is selected, users enter an amount and confirm the transaction through their wallet. Before confirming, users are shown the expected output amount, price impact, and any applicable fees, allowing them to review execution conditions prior to submission.
   </Accordion>
@@ -116,17 +116,17 @@ description: "Quick answers to common questions."
     To evaluate collateral safely, borrowing capacity is calculated using time-weighted EMA prices derived from the pool’s own liquidity. This smoothing mechanism reduces the impact of short-term price spikes or manipulation, ensuring that borrowing power adjusts gradually rather than instantly.
   </Accordion>
   <Accordion title="Can I borrow against any asset? ">
-    Almost. Omnipair allows borrowing against any SPL token, as long as there is an active spot market for that asset with sufficient liquidity. 
+    Almost. Omnipair allows borrowing against any SPL token, as long as there is an active spot market for that asset with sufficient liquidity.
 
     Unlike traditional lending protocols that rely on protocol-wide whitelists, Omnipair’s markets are pair-specific and isolated. Whether an asset can be efficiently used as collateral depends entirely on the liquidity, configuration, and risk parameters of its individual market rather than approval at the protocol level.
   </Accordion>
   <Accordion title="How are interest rates determined? ">
-    Interest rates on Omnipair are market-driven and adjust dynamically based on utilization within each isolated pool. 
+    Interest rates on Omnipair are market-driven and adjust dynamically based on utilization within each isolated pool.
 
     As borrowing demand increases and a larger portion of available liquidity is utilized, interest rates rise to reflect increased capital scarcity. When utilization decreases, rates fall accordingly. This ensures that borrowing costs respond in real time to supply and demand within the market.
   </Accordion>
   <Accordion title="How do I repay my borrow position?">
-    Borrowed positions can be repaid either directly through the Omnipair app interface or by interacting with the protocol smart contracts directly. 
+    Borrowed positions can be repaid either directly through the Omnipair app interface or by interacting with the protocol smart contracts directly.
 
     Within the app, navigate to the Borrowed Positions tab, select the position you would like to repay, and click Repay. You can choose to repay part of the borrowed amount or close the position entirely, depending on your preference.
   </Accordion>
@@ -136,7 +136,7 @@ description: "Quick answers to common questions."
 
 <AccordionGroup>
   <Accordion title="How do leveraged positions work?">
-    Leveraged positions on Omnipair are created through a process often referred to as recursive borrowing. A user deposits an asset as collateral, borrows the paired asset from the same market, and then swaps the borrowed asset back into the original asset. 
+    Leveraged positions on Omnipair are created through a process often referred to as recursive borrowing. A user deposits an asset as collateral, borrows the paired asset from the same market, and then swaps the borrowed asset back into the original asset.
 
     This process can be repeated to increase exposure, as long as the position remains within the market’s borrowing limits. Rather than relying on external margin systems or order books,  leverage is achieved directly inside the market through borrowing and swapping using the pool’s existing liquidity.
   </Accordion>
@@ -157,13 +157,30 @@ description: "Quick answers to common questions."
   </Accordion>
 </AccordionGroup>
 
+## Liquidations
+
+<AccordionGroup>
+  <Accordion>
+    Transactions may fail for several reasons, including insufficient SOL for network fees, slippage limits being exceeded, or rapid changes in market conditions between transaction submission and confirmation. Reviewing error messages and adjusting parameters such as slippage tolerance can often resolve the issue.
+  </Accordion>
+  <Accordion>
+    Borrow capacity depends on multiple factors, including the Collateral Factor of the market, current asset prices, market utilization, and available liquidity. If utilization is high or prices have moved recently, borrowing limits may be lower than anticipated.
+  </Accordion>
+  <Accordion>
+    When a large portion of liquidity in a market is currently borrowed, some assets may be temporarily unavailable for withdrawal. Liquidity becomes available again as borrowers repay or positions are liquidated according to market rules.
+  </Accordion>
+  <Accordion>
+    High price impact usually indicates that the trade size is large relative to available liquidity in the selected market. This is more common in smaller or newly created markets and is displayed before confirming a transaction.
+  </Accordion>
+</AccordionGroup>
+
 ## Customizable Pools
 
 <AccordionGroup>
   <Accordion title="How do I deploy a new market?">
-    To deploy a new pool on Omnipair, a user selects a token pair, configures the market’s risk parameters, and supplies initial liquidity for both assets. Pools can be created through the Deploy Pool interface in the Omnipair app or by interacting directly with the protocol’s smart contracts. 
+    To deploy a new pool on Omnipair, a user selects a token pair, configures the market’s risk parameters, and supplies initial liquidity for both assets. Pools can be created through the Deploy Pool interface in the Omnipair app or by interacting directly with the protocol’s smart contracts.
 
-    Once deployed, the pool becomes an active market immediately and can be used by anyone for swaps, borrowing, leverage, and liquidity provision. 
+    Once deployed, the pool becomes an active market immediately and can be used by anyone for swaps, borrowing, leverage, and liquidity provision.
   </Accordion>
   <Accordion title="What do risk presets mean?">
     Risk presets are predefined configurations that bundle key market parameters into a single choice. Each preset sets a maximum Collateral Factor (CF), an implied maximum leverage, and an EMA half-life, allowing users to quickly tune the balance between capital efficiency and risk resilience.
@@ -202,6 +219,34 @@ description: "Quick answers to common questions."
     - **On-chain enforcement** ensures that constraints, liquidations, and debt resolution occur deterministically according to market rules
 
     These mechanisms allow Omnipair to remain permissionless while maintaining disciplined risk boundaries.
+  </Accordion>
+</AccordionGroup>
+
+## Governance
+
+<AccordionGroup>
+  <Accordion>
+    Transactions may fail for several reasons, including insufficient SOL for network fees, slippage limits being exceeded, or rapid changes in market conditions between transaction submission and confirmation. Reviewing error messages and adjusting parameters such as slippage tolerance can often resolve the issue.
+  </Accordion>
+  <Accordion>
+    Borrow capacity depends on multiple factors, including the Collateral Factor of the market, current asset prices, market utilization, and available liquidity. If utilization is high or prices have moved recently, borrowing limits may be lower than anticipated.
+  </Accordion>
+  <Accordion>
+    When a large portion of liquidity in a market is currently borrowed, some assets may be temporarily unavailable for withdrawal. Liquidity becomes available again as borrowers repay or positions are liquidated according to market rules.
+  </Accordion>
+  <Accordion>
+    High price impact usually indicates that the trade size is large relative to available liquidity in the selected market. This is more common in smaller or newly created markets and is displayed before confirming a transaction.
+  </Accordion>
+</AccordionGroup>
+
+## Developers
+
+<AccordionGroup>
+  <Accordion>
+    Transactions may fail for several reasons, including insufficient SOL for network fees, slippage limits being exceeded, or rapid changes in market conditions between transaction submission and confirmation. Reviewing error messages and adjusting parameters such as slippage tolerance can often resolve the issue.
+  </Accordion>
+  <Accordion>
+    Borrow capacity depends on multiple factors, including the Collateral Factor of the market, current asset prices, market utilization, and available liquidity. If utilization is high or prices have moved recently, borrowing limits may be lower than anticipated.
   </Accordion>
 </AccordionGroup>
 
