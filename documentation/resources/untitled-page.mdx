@@ -116,7 +116,7 @@ description: "Quick answers to common questions."
     To evaluate collateral safely, borrowing capacity is calculated using time-weighted EMA prices derived from the pool’s own liquidity. This smoothing mechanism reduces the impact of short-term price spikes or manipulation, ensuring that borrowing power adjusts gradually rather than instantly.
   </Accordion>
   <Accordion title="Can I borrow against any asset? ">
-    Almost. Omnipair allows borrowing against any SPL token, as long as there is an active spot market for that asset with sufficient liquidity.
+    In most cases, yes. Omnipair allows borrowing against any SPL token, provided it has an active, sufficiently liquid market. Token-2022 tokens are not yet supported. 
 
     Unlike traditional lending protocols that rely on protocol-wide whitelists, Omnipair’s markets are pair-specific and isolated. Whether an asset can be efficiently used as collateral depends entirely on the liquidity, configuration, and risk parameters of its individual market rather than approval at the protocol level.
   </Accordion>
