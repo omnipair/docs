@@ -225,28 +225,38 @@ description: "Quick answers to common questions."
 ## Governance
 
 <AccordionGroup>
-  <Accordion>
-    Transactions may fail for several reasons, including insufficient SOL for network fees, slippage limits being exceeded, or rapid changes in market conditions between transaction submission and confirmation. Reviewing error messages and adjusting parameters such as slippage tolerance can often resolve the issue.
+  <Accordion title="What is OMFG?">
+    OMFG (Omnipair Futarchy Governance token) is the governance token of Omnipair. It empowers token holders to regulate the protocol’s high-level behavior without interfering with immutable smart contracts. OMFG holders are part of a two-layer governance model that balances market-driven decision-making with regulatory oversight while keeping markets permissionless and autonomous.
   </Accordion>
-  <Accordion>
-    Borrow capacity depends on multiple factors, including the Collateral Factor of the market, current asset prices, market utilization, and available liquidity. If utilization is high or prices have moved recently, borrowing limits may be lower than anticipated.
+  <Accordion title="How does governance work on Omnipair? ">
+    Omnipair uses a layered governance model that separates market-driven behavior from protocol-level oversight. Higher-level protocol decisions are handled through futarchy-based governance on MetaDAO, where prediction markets are used to signal which proposals are expected to lead to better outcomes. Futarchy proposals are open to anyone and rely on market participation rather than token voting alone. 
+
+    In parallel, certain regulatory decisions and protocol authorities are reserved for OMFG holders through vote-based governance, providing oversight without interfering with deployed markets.
+
+    Learn more: [**Omnipair on MetaDAO**](https://www.metadao.fi/projects/omnipair)
   </Accordion>
-  <Accordion>
-    When a large portion of liquidity in a market is currently borrowed, some assets may be temporarily unavailable for withdrawal. Liquidity becomes available again as borrowers repay or positions are liquidated according to market rules.
+  <Accordion title="What are futarchy proposals?">
+    Futarchy is a governance mechanism where prediction markets decide policy outcomes. Instead of traditional voting, participants buy and sell conditional outcomes, and the market selects the policy expected to perform best. In Omnipair, futarchy proposals are open to anyone and often relate to measurable metrics such as protocol revenue or adoption. The winning outcome is executed on-chain when the market signals its preference.
   </Accordion>
-  <Accordion>
-    High price impact usually indicates that the trade size is large relative to available liquidity in the selected market. This is more common in smaller or newly created markets and is displayed before confirming a transaction.
+  <Accordion title="What does vote-based governance control?">
+    Vote-based governance is reserved for OMFG holders and serves as a regulatory authority rather than a day-to-day decision maker. This layer can adjust protocol-level parameters such as fees and governance mechanics (e.g., timelock durations, proposal costs, bond sizes), and it provides guardrails against malicious or reckless actions by market participants or pool creators.
+  </Accordion>
+  <Accordion title="Why this two-layer model?">
+    Omnipair splits governance responsibilities to balance decentralized decision efficiency with long-term safety. Futarchy allows proposals to be evaluated by market prediction, which can capture collective insight and economic incentives. Vote-based governance gives OMFG holders a regulatory role, overseeing systematic risk and setting protocol-wide constraints without micromanaging individual markets.
+  </Accordion>
+  <Accordion title="Is participation in governance mandatory?">
+    No. Participation in governance, including futarchy proposals and OMFG voting, is entirely optional. Users can interact with Omnipair without engaging in governance at all. Governance exists to guide the protocol’s long-term evolution and regulatory boundaries, but using Omnipair’s markets, swapping, borrowing, or providing liquidity does not require participation in any proposal or vote.
   </Accordion>
 </AccordionGroup>
 
 ## Developers
 
 <AccordionGroup>
-  <Accordion>
-    Transactions may fail for several reasons, including insufficient SOL for network fees, slippage limits being exceeded, or rapid changes in market conditions between transaction submission and confirmation. Reviewing error messages and adjusting parameters such as slippage tolerance can often resolve the issue.
+  <Accordion title="How do I integrate Omnipair functionality?">
+    
   </Accordion>
-  <Accordion>
-    Borrow capacity depends on multiple factors, including the Collateral Factor of the market, current asset prices, market utilization, and available liquidity. If utilization is high or prices have moved recently, borrowing limits may be lower than anticipated.
+  <Accordion title="How can I query Omnipair protocol data?">
+    
   </Accordion>
 </AccordionGroup>
 
