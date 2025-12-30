@@ -12,9 +12,9 @@ description: "Quick answers to common questions."
     Unlike traditional AMMs or lending protocols, Omnipair does not rely on governance whitelists or external price oracles. Any SPL token pair with liquidity can form its own market, with risk and pricing determined by that market’s dynamics.
   </Accordion>
   <Accordion title="How is Omnipair different from a traditional AMM or lending protocol?">
-    Traditional AMMs are designed primarily for token swaps and do not support borrowing or leverage. Lending protocols, on the other hand, typically allow users to supply assets into shared pools that support borrowing across the entire system, often restricted to a curated list of assets.
+    Traditional AMMs are designed primarily for token swaps and do not support borrowing or leverage. Lending protocols, on the other hand, typically allow users to supply assets into shared pools that support borrowing across the entire system, often restricted to a curated list of assets. Omnipair combines these models into a single structure.
 
-    Omnipair combines these models into a single structure. Each market is isolated to a specific token pair and supports swaps, collateralized borrowing, leverage, and liquidity provision within the same pool. Risk, pricing, and borrowing capacity are determined locally by each market rather than globally across the protocol. This design allows long-tail and emerging assets to form money markets organically, without exposing the rest of the protocol to their risk.
+    Each market is isolated to a specific token pair and supports swaps, collateralized borrowing, leverage, and liquidity provision within the same pool. Risk, pricing, and borrowing capacity are determined locally by each market rather than globally across the protocol. This design allows long-tail and emerging assets to form money markets organically, without exposing the rest of the protocol to their risk.
   </Accordion>
   <Accordion title="Do I need a wallet to use Omnipair?">
     Yes. Omnipair is a non-custodial protocol, meaning users always retain control over their assets. To interact with Omnipair, you must connect a Solana-compatible wallet such as Phantom or Solflare.
@@ -42,54 +42,90 @@ description: "Quick answers to common questions."
 ## Liquidity Provisioning
 
 <AccordionGroup>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="What does it mean to provide liquidity on Omnipair?">
+    Providing liquidity on Omnipair means depositing assets into a specific market’s pool so they can be used for swaps, borrowing, and leveraged positions within that market.
+
+    Unlike traditional AMMs where liquidity is only used for trading, Omnipair liquidity is shared across multiple market functions. This allows the same capital to generate fees from swaps and interest from borrowing, all within a single isolated pool.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="How do I join an existing pool?">
+    To join an existing pool, users select a market and deposit both assets according to the pool’s current ratio. Once deposited, users receive omLP tokens representing their proportional ownership of the pool.
+
+    omLP tokens track the user’s share of the pool and accrue value as the market generates fees and interest over time. 
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="What do liquidity providers earn?">
+    Liquidity providers earn yield from two primary sources within each market. These include swap fees paid by traders who execute swaps in the market, as well as interest paid by borrowers who use liquidity from the same pool to open borrowing or leverage positions, resulting in multi-source yield accrual through one position. 
+
+    Because Omnipair markets are isolated, the exact yield varies by pool and reflects the specific trading volume, borrowing demand, and utilization of that market over time.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="What happens to my LP position over time?">
+    An LP position represents a proportional claim on the assets held within a specific pool. Over time, both the value and composition of the position can change as the market evolves.
+
+    LP performance is influenced by trading activity and accumulated swap fees, interest paid by borrowers, changes in relative asset prices, and overall market utilization. Since all activity occurs within an isolated market, LP outcomes are directly tied to that market’s dynamics rather than protocol-wide conditions.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="How do I withdraw liquidity?">
+    Liquidity providers can withdraw their position by burning their LP tokens, which returns their proportional share of the pool’s underlying assets. Withdrawals can be performed in a single transaction through the interface and may be done partially or in full, depending on the amount the user chooses to remove.
+
+    Withdrawals are subject to current market utilization. If a significant portion of the pool’s liquidity is actively borrowed, some assets may be temporarily unavailable until borrowers repay or positions are liquidated, at which point liquidity becomes available again.
+  </Accordion>
+  <Accordion title="What is impermanent loss?">
+    Impermanent loss occurs when the relative prices of assets in a pool change compared to when liquidity was deposited, resulting in a different asset composition than simply holding the assets outside the pool. This can lead to a lower value upon withdrawal than holding the tokens individually.
+
+    On Omnipair, multi-source yield within the same market may offset impermanent loss over time. However, impermanent loss remains an important consideration for liquidity providers, particularly in volatile or low-liquidity markets.
   </Accordion>
 </AccordionGroup>
 
 ## Swaps
 
 <AccordionGroup>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="How does swapping work?">
+    Users can swap tokens by selecting the asset they want to swap from and then choosing an available paired asset that has an active market with it on Omnipair. Once a market is selected, users enter an amount and confirm the transaction through their wallet.
+
+    Swaps are executed directly against the liquidity in the selected market. Before confirming, users are shown the expected output amount, price impact, and any applicable fees so they can review execution conditions.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="Is pricing different from regular AMMs?">
+    Omnipair's GAMM model uses constant-product AMM pricing (the x·y = k invariant) based on on-chain liquidity, similar to traditional AMMs. 
+
+    In addition, Omnipair applies EMA-based smoothing for risk-related calculations, such as borrowing limits and liquidations. While spot swaps reflect real-time liquidity conditions, these parameters influence how markets behave under volatility and affect capital availability within the pool.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="What is price impact and how is it calculated?">
+    Price impact represents how much a swap changes the market price due to the size of the trade relative to available liquidity.
+
+    Larger trades or trades in markets with lower liquidity generally result in higher price impact. This is a natural consequence of trading against a finite liquidity pool and is displayed to users before execution.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="Why might long-tail assets have different pricing dynamics?">
+    Long-tail and newly issued assets often have lower liquidity and higher volatility than more established tokens. As a result, swaps involving these assets may experience higher price impact and more noticeable price movement.
+
+    Because Omnipair markets are isolated, these dynamics are contained within the specific market and do not affect other markets on the protocol.
+  </Accordion>
+  <Accordion title="Are swap prices affected by borrowing or leverage activity?">
+    Swap prices on Omnipair are not directly affected by borrowing or leverage activity. Swaps are priced using the pool’s actual reserves under the constant-product AMM model. Borrowing and leverage operate through virtual reserves, which track debt and risk exposure without affecting the reserves used for swap pricing.
+
+    Because of this separation, opening borrow or leveraged positions does not distort swap prices or cause artificial price movements. However, high borrowing utilization can reduce available liquidity in the pool, which may increase price impact for large swaps.
   </Accordion>
 </AccordionGroup>
 
 ## Borrowing
 
 <AccordionGroup>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="How does borrowing work?">
+    Borrowing on Omnipair takes place within the same pair-specific market where swapping occurs. Users can access assets by depositing collateral into a pool and borrowing the paired asset.
+
+    When a user supplies collateral, it remains locked in the market while the borrowed asset is transferred directly to the user’s wallet. The borrowed position accrues interest over time until it is repaid. All borrowing activity is confined to the specific market, meaning collateral, debt, and risk never extend beyond the selected token pair.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="What determines how much I can borrow?">
+    The amount a user can borrow on Omnipair is determined by the value of their deposited collateral, the Collateral Factor (CF) of the market, and the price used to evaluate that collateral. Each market defines a maximum Collateral Factor, which caps how much value can be borrowed relative to the collateral supplied. 
+
+    To evaluate collateral safely, borrowing capacity is calculated using time-weighted EMA prices derived from the pool’s own liquidity. This smoothing mechanism reduces the impact of short-term price spikes or manipulation, ensuring that borrowing power adjusts gradually rather than instantly.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="Can I borrow against any asset? ">
+    Almost. Omnipair allows borrowing against any SPL token, as long as there is an active spot market for that asset with sufficient liquidity.
+
+    Unlike traditional lending protocols that rely on protocol-wide whitelists, Omnipair’s markets are pair-specific and isolated. Whether an asset can be efficiently used as collateral depends entirely on the liquidity, configuration, and risk parameters of its individual market rather than approval at the protocol level.
   </Accordion>
-  <Accordion title="New Accordion">
-    
+  <Accordion title="How are interest rates determined? ">
+    Interest rates on Omnipair are market-driven and adjust dynamically based on utilization within each isolated pool.
+
+    As borrowing demand increases and a larger portion of available liquidity is utilized, interest rates rise to reflect increased capital scarcity. When utilization decreases, rates fall accordingly. This ensures that borrowing costs respond in real time to supply and demand within the market.
   </Accordion>
 </AccordionGroup>
 
@@ -141,7 +177,7 @@ description: "Quick answers to common questions."
   </Accordion>
 </AccordionGroup>
 
-## Troubleshooting 
+## Troubleshooting
 
 <AccordionGroup>
   <Accordion title="New Accordion">
@@ -157,5 +193,3 @@ description: "Quick answers to common questions."
     
   </Accordion>
 </AccordionGroup>
-
-## 
