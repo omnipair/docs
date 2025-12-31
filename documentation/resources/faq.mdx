@@ -61,7 +61,7 @@ description: "Quick answers to common questions."
     LP performance is influenced by trading activity and accumulated swap fees, interest paid by borrowers, changes in relative asset prices, and overall market utilization. Since all activity occurs within an isolated market, LP outcomes are directly tied to that market’s dynamics rather than protocol-wide conditions.
   </Accordion>
   <Accordion title="How do I withdraw liquidity?">
-    Liquidity providers can withdraw their position by burning their LP tokens, which returns their proportional share of the pool’s underlying assets. Withdrawals can be performed in a single transaction through the interface and may be done partially or in full, depending on the amount the user chooses to remove.
+    Liquidity providers can withdraw their position by burning their LP tokens, which returns their proportional share of the pool’s underlying assets. Withdrawals can be performed in a single transaction through the Omnipair app interface and may be done partially or in full, depending on the amount the user chooses to remove.
 
     Withdrawals are subject to current market utilization. If a significant portion of the pool’s liquidity is actively borrowed, some assets may be temporarily unavailable until borrowers repay or positions are liquidated, at which point liquidity becomes available again.
   </Accordion>
@@ -160,17 +160,25 @@ description: "Quick answers to common questions."
 ## Liquidations
 
 <AccordionGroup>
-  <Accordion>
-    Transactions may fail for several reasons, including insufficient SOL for network fees, slippage limits being exceeded, or rapid changes in market conditions between transaction submission and confirmation. Reviewing error messages and adjusting parameters such as slippage tolerance can often resolve the issue.
+  <Accordion title="How do liquidations work? ">
+    When a borrower crosses the liquidation threshold (collateral value \< debt value based on EMA pricing), their debt is immediately removed from the debt accounting pool. This requires no external liquidator.
+
+    Once the debt is written off, the borrower’s collateral ownership transfers to the pool. Rather than selling collateral into the market, the protocol absorbs it directly, preventing external price shocks and manipulation. This internal liquidation logic is oracle-less and leverages EMA pricing to smooth volatility and reduce manipulation risk.
   </Accordion>
-  <Accordion>
-    Borrow capacity depends on multiple factors, including the Collateral Factor of the market, current asset prices, market utilization, and available liquidity. If utilization is high or prices have moved recently, borrowing limits may be lower than anticipated.
+  <Accordion title="Why is collateral not sold during liquidation?">
+    Traditional lending protocols liquidate by selling seized collateral into the market, which can cause price impact, slippage, and cascading liquidations during volatility. Omnipair avoids this by absorbing the collateral into pool reserves after writing off the borrower’s debt, eliminating reliance on third-party liquidators and minimizing disruption to the pool’s liquidity and price. 
+
+    Without external collateral sales, the pool remains solvent without triggering price cascades, helping maintain smoother market conditions and reducing flash-crash risks inherent in auction-based systems.
   </Accordion>
-  <Accordion>
-    When a large portion of liquidity in a market is currently borrowed, some assets may be temporarily unavailable for withdrawal. Liquidity becomes available again as borrowers repay or positions are liquidated according to market rules.
+  <Accordion title="How does liquidation affect liquidity providers?">
+    When a borrower is liquidated through debt write-off, the borrower’s collateral is absorbed into the pool’s reserves. Any resulting changes in reserves are shared proportionally among LPs within that isolated market.
+
+    Because liquidations do not rely on external auctions or third-party liquidators, risk remains contained within the market and cannot impact other pools or the protocol as a whole.
   </Accordion>
-  <Accordion>
-    High price impact usually indicates that the trade size is large relative to available liquidity in the selected market. This is more common in smaller or newly created markets and is displayed before confirming a transaction.
+  <Accordion title="How can I avoid getting liquidated?">
+    To avoid liquidation on Omnipair, users should keep their borrowing positions sufficiently collateralized relative to the market’s Collateral Factor and EMA-based pricing.
+
+    Because borrowing capacity is evaluated using time-weighted EMA prices, collateral requirements adjust gradually rather than reacting to short-term price spikes. Maintaining a buffer by borrowing below maximum limits, adding collateral, or repaying debt partially as market conditions change can help reduce liquidation risk.
   </Accordion>
 </AccordionGroup>
 
