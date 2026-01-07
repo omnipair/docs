@@ -3,9 +3,9 @@
   "theme": "almond",
   "name": "Omnipair Docs",
   "colors": {
-    "primary": "#3C64FF",
-    "light": "#6597FF",
-    "dark": "#243FD9"
+    "primary": "#009954",
+    "light": "#bacdaA",
+    "dark": "#004521"
   },
   "favicon": "/favicon.svg",
   "navigation": {
