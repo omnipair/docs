@@ -95,6 +95,7 @@
       },
       {
         "tab": "Code Reference",
+        "hidden": true,
         "groups": [
           {
             "group": "Overview",
