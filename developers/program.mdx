@@ -1,0 +1,399 @@
+---
+title: 'Program Reference'
+description: 'Omnipair Solana program instructions, accounts, and on-chain architecture'
+icon: 'rust'
+---
+
+## Overview
+
+The Omnipair program is a Solana smart contract built with [Anchor](https://www.anchor-lang.com/) that implements an oracle-less AMM with integrated lending markets.
+
+<Info>
+**Program ID**: `omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE`
+
+**Source Code**: [github.com/omnipair/omnipair-rs](https://github.com/omnipair/omnipair-rs)
+</Info>
+
+## Instructions
+
+### Liquidity Management
+
+<AccordionGroup>
+  <Accordion title="initialize" icon="plus">
+    Creates a new trading pair with initial liquidity.
+
+    ```rust
+    pub fn initialize(ctx: Context<InitializeAndBootstrap>, args: InitializeAndBootstrapArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `token0` | `Pubkey` | First token mint (lexicographically smaller) |
+    | `token1` | `Pubkey` | Second token mint |
+    | `amount0` | `u64` | Initial token0 amount |
+    | `amount1` | `u64` | Initial token1 amount |
+    | `swap_fee_bps` | `u16` | Swap fee in basis points |
+    | `half_life` | `u64` | EMA half-life in milliseconds |
+    | `fixed_cf_bps` | `Option<u16>` | Fixed collateral factor (or None for dynamic) |
+
+    **Accounts:**
+    - `pair` - The new pair account (PDA)
+    - `token0_mint` - Token0 mint account
+    - `token1_mint` - Token1 mint account
+    - `lp_mint` - LP token mint (created)
+    - `rate_model` - Interest rate model account
+    - `futarchy_authority` - Protocol authority
+  </Accordion>
+
+  <Accordion title="add_liquidity" icon="droplet">
+    Adds liquidity to an existing pair.
+
+    ```rust
+    pub fn add_liquidity(ctx: Context<AdjustLiquidity>, args: AddLiquidityArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `amount0_desired` | `u64` | Desired token0 amount |
+    | `amount1_desired` | `u64` | Desired token1 amount |
+    | `amount0_min` | `u64` | Minimum token0 (slippage) |
+    | `amount1_min` | `u64` | Minimum token1 (slippage) |
+
+    **Returns:** LP tokens minted proportional to liquidity provided.
+  </Accordion>
+
+  <Accordion title="remove_liquidity" icon="arrow-up-from-bracket">
+    Removes liquidity and burns LP tokens.
+
+    ```rust
+    pub fn remove_liquidity(ctx: Context<AdjustLiquidity>, args: RemoveLiquidityArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `liquidity` | `u64` | LP tokens to burn |
+    | `amount0_min` | `u64` | Minimum token0 out |
+    | `amount1_min` | `u64` | Minimum token1 out |
+
+    <Note>A 1% withdrawal fee is charged and distributed to remaining LPs.</Note>
+  </Accordion>
+</AccordionGroup>
+
+### Spot Trading
+
+<AccordionGroup>
+  <Accordion title="swap" icon="arrow-right-arrow-left">
+    Executes a token swap using the constant product formula.
+
+    ```rust
+    pub fn swap(ctx: Context<Swap>, args: SwapArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `amount_in` | `u64` | Input token amount |
+    | `min_amount_out` | `u64` | Minimum output (slippage protection) |
+    | `is_token0_in` | `bool` | True if swapping token0 for token1 |
+
+    **Formula:**
+    ```
+    amount_out = (amount_in_after_fee × reserve_out) / (reserve_in + amount_in_after_fee)
+    ```
+
+    **Fee Distribution:**
+    - LP share → Added to reserves
+    - Protocol share → Accumulated as surplus for Futarchy
+  </Accordion>
+</AccordionGroup>
+
+### Lending Operations
+
+<AccordionGroup>
+  <Accordion title="add_collateral" icon="coins">
+    Deposits collateral to enable borrowing.
+
+    ```rust
+    pub fn add_collateral(ctx: Context<AddCollateral>, args: AdjustCollateralArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `amount` | `u64` | Collateral amount to deposit |
+    | `token` | `Pubkey` | Token mint of collateral |
+  </Accordion>
+
+  <Accordion title="remove_collateral" icon="arrow-up">
+    Withdraws collateral (subject to health check).
+
+    ```rust
+    pub fn remove_collateral(ctx: Context<CommonAdjustCollateral>, args: AdjustCollateralArgs) -> Result<()>
+    ```
+
+    **Requirements:**
+    - Position must remain healthy after withdrawal
+    - Blocked in reduce-only mode if debt exists
+  </Accordion>
+
+  <Accordion title="borrow" icon="hand-holding-dollar">
+    Borrows tokens against deposited collateral.
+
+    ```rust
+    pub fn borrow(ctx: Context<CommonAdjustDebt>, args: AdjustDebtArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `amount` | `u64` | Amount to borrow |
+    | `token` | `Pubkey` | Token mint to borrow |
+
+    **Constraints:**
+    - Borrow limit = Collateral Value × Collateral Factor × 0.95
+    - Uses impact-aware valuation at pessimistic EMA price
+  </Accordion>
+
+  <Accordion title="repay" icon="credit-card">
+    Repays borrowed tokens.
+
+    ```rust
+    pub fn repay(ctx: Context<CommonAdjustDebt>, args: AdjustDebtArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `amount` | `u64` | Amount to repay |
+    | `token` | `Pubkey` | Token mint being repaid |
+  </Accordion>
+
+  <Accordion title="liquidate" icon="gavel">
+    Liquidates an undercollateralized position.
+
+    ```rust
+    pub fn liquidate(ctx: Context<Liquidate>) -> Result<()>
+    ```
+
+    **Liquidation Flow:**
+    1. Verify position health: `debt ≥ borrow_limit`
+    2. Calculate collateral to seize with price impact
+    3. Apply 3% penalty (0.5% to liquidator, 2.5% to LPs)
+    4. Write off debt shares proportionally
+
+    **Close Factor:** 50% for partial liquidations
+  </Accordion>
+
+  <Accordion title="flashloan" icon="bolt">
+    Executes an uncollateralized flash loan.
+
+    ```rust
+    pub fn flashloan(ctx: Context<Flashloan>, args: FlashloanArgs) -> Result<()>
+    ```
+
+    **Arguments:**
+    | Field | Type | Description |
+    | ----- | ---- | ----------- |
+    | `amount0` | `u64` | Token0 to borrow |
+    | `amount1` | `u64` | Token1 to borrow |
+
+    **Fee:** 0.05% (5 bps)
+
+    <Warning>Must repay borrowed amount + fee within the same transaction.</Warning>
+  </Accordion>
+</AccordionGroup>
+
+### Governance (Futarchy)
+
+<AccordionGroup>
+  <Accordion title="claim_protocol_fees" icon="hand-holding-heart">
+    Claims accumulated protocol fees (permissionless).
+
+    ```rust
+    pub fn claim_protocol_fees(ctx: Context<ClaimProtocolFees>) -> Result<()>
+    ```
+
+    **Distribution:** Fees are split according to `RevenueDistribution`:
+    - Futarchy Treasury
+    - Buybacks Vault
+    - Team Treasury
+
+    <Tip>Anyone can call this instruction to trigger fee distribution.</Tip>
+  </Accordion>
+
+  <Accordion title="set_global_reduce_only" icon="pause">
+    Enables/disables global reduce-only mode (authority only).
+
+    ```rust
+    pub fn set_global_reduce_only(ctx: Context<SetGlobalReduceOnly>, args: SetGlobalReduceOnlyArgs) -> Result<()>
+    ```
+
+    When enabled, blocks new borrows and liquidity additions across all pairs.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Accounts
+
+### Pair
+
+The core account storing pool state.
+
+```rust
+pub struct Pair {
+    // Token addresses
+    pub token0: Pubkey,
+    pub token1: Pubkey,
+    pub lp_mint: Pubkey,
+
+    // Parameters
+    pub rate_model: Pubkey,
+    pub swap_fee_bps: u16,
+    pub half_life: u64,
+    pub fixed_cf_bps: Option<u16>,
+
+    // Virtual Reserves (r_virtual = r_cash + r_debt)
+    pub reserve0: u64,
+    pub reserve1: u64,
+
+    // Cash Reserves
+    pub cash_reserve0: u64,
+    pub cash_reserve1: u64,
+
+    // Price EMAs
+    pub last_price0_ema: LastPriceEMA,
+    pub last_price1_ema: LastPriceEMA,
+
+    // Debt tracking
+    pub total_debt0: u64,
+    pub total_debt1: u64,
+    pub total_debt0_shares: u128,
+    pub total_debt1_shares: u128,
+
+    // Collateral tracking
+    pub total_collateral0: u64,
+    pub total_collateral1: u64,
+
+    // LP supply
+    pub total_supply: u64,
+
+    // Metadata
+    pub token0_decimals: u8,
+    pub token1_decimals: u8,
+    pub reduce_only: bool,
+}
+```
+
+**PDA Seeds:** `["gamm_pair", token0, token1, params_hash]`
+
+### UserPosition
+
+Tracks individual user's collateral and debt.
+
+```rust
+pub struct UserPosition {
+    pub owner: Pubkey,
+    pub pair: Pubkey,
+
+    // Collateral
+    pub collateral0: u64,
+    pub collateral1: u64,
+
+    // Debt shares
+    pub debt0_shares: u128,
+    pub debt1_shares: u128,
+
+    // Locked-in liquidation CFs
+    pub collateral0_liquidation_cf_bps: u16,
+    pub collateral1_liquidation_cf_bps: u16,
+}
+```
+
+**PDA Seeds:** `["gamm_position", pair, owner]`
+
+### RateModel
+
+Configurable interest rate model parameters.
+
+```rust
+pub struct RateModel {
+    pub target_util_start_bps: u64,  // Lower utilization target (default: 50%)
+    pub target_util_end_bps: u64,    // Upper utilization target (default: 85%)
+    pub rate_half_life_ms: u64,      // Rate adjustment speed
+    pub min_rate_bps: u64,           // Rate floor
+    pub max_rate_bps: u64,           // Rate ceiling (0 = uncapped)
+    pub initial_rate_bps: u64,       // Starting rate
+}
+```
+
+### FutarchyAuthority
+
+Protocol-level governance account.
+
+```rust
+pub struct FutarchyAuthority {
+    pub authority: Pubkey,
+    pub recipients: RevenueRecipients,
+    pub revenue_share: RevenueShare,
+    pub revenue_distribution: RevenueDistribution,
+    pub global_reduce_only: bool,
+}
+```
+
+---
+
+## Events
+
+The program emits events for indexing and tracking:
+
+| Event | Description |
+| ----- | ----------- |
+| `PairCreatedEvent` | New pair initialized |
+| `SwapEvent` | Swap executed |
+| `AdjustLiquidityEvent` | Liquidity added/removed |
+| `AdjustCollateralEvent` | Collateral deposited/withdrawn |
+| `AdjustDebtEvent` | Borrow/repay executed |
+| `UserPositionLiquidatedEvent` | Position liquidated |
+| `FlashloanEvent` | Flash loan executed |
+| `ClaimProtocolFeesEvent` | Fees distributed |
+| `UpdatePairEvent` | Pair state updated (interest accrual) |
+
+---
+
+## Error Codes
+
+Common errors you may encounter:
+
+| Error | Description |
+| ----- | ----------- |
+| `BorrowingPowerExceeded` | Borrow amount exceeds collateral limit |
+| `Undercollateralized` | Position health below threshold |
+| `NotUndercollateralized` | Cannot liquidate healthy position |
+| `SlippageExceeded` | Output below minimum requested |
+| `InsufficientLiquidity` | Not enough reserves for operation |
+| `ReduceOnlyMode` | Operation blocked in reduce-only mode |
+| `BorrowExceedsReserve` | Cannot borrow more than cash reserves |
+
+---
+
+## Verifiable Builds
+
+All releases use Anchor's verifiable build system:
+
+```bash
+# Verify on-chain program matches source
+solana-verify verify-from-repo \
+  --remote \
+  --program-id omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE \
+  https://github.com/omnipair/omnipair-rs \
+  --library-name omnipair \
+  --bpf-flag "features=production"
+```
+
+<Card title="View on OtterSec Registry" icon="shield-check" href="https://verify.osec.io/status/omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE">
+  Verified build status and audit submissions
+</Card>

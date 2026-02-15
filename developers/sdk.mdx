@@ -1,0 +1,391 @@
+---
+title: 'TypeScript SDK'
+description: 'Client SDK for interacting with Omnipair on Solana'
+icon: 'npm'
+---
+
+## Overview
+
+The `@omnipair/program-interface` package provides TypeScript bindings for the Omnipair Solana program, including the Anchor IDL, TypeScript types, PDA derivation utilities, and constants.
+
+<Card title="NPM Package" icon="npm" href="https://www.npmjs.com/package/@omnipair/program-interface">
+  View on npm registry
+</Card>
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install @omnipair/program-interface @coral-xyz/anchor @solana/web3.js
+```
+
+```bash yarn
+yarn add @omnipair/program-interface @coral-xyz/anchor @solana/web3.js
+```
+
+```bash pnpm
+pnpm add @omnipair/program-interface @coral-xyz/anchor @solana/web3.js
+```
+</CodeGroup>
+
+### Peer Dependencies
+
+| Package | Version |
+| ------- | ------- |
+| `@coral-xyz/anchor` | >= 0.30.0 |
+| `@solana/web3.js` | ^1.95.0 |
+
+---
+
+## Exports
+
+### IDL
+
+The Anchor IDL JSON for the Omnipair program:
+
+```typescript
+import { IDL } from "@omnipair/program-interface";
+
+// IDL contains all instruction definitions, accounts, types, and events
+console.log(IDL.name); // "omnipair"
+console.log(IDL.instructions.length); // Number of instructions
+```
+
+### Program Type
+
+Fully typed program interface for Anchor:
+
+```typescript
+import { Program } from "@coral-xyz/anchor";
+import { IDL, Omnipair, PROGRAM_ID } from "@omnipair/program-interface";
+
+const program = new Program<Omnipair>(IDL, PROGRAM_ID, provider);
+
+// All methods are fully typed
+const pair = await program.account.pair.fetch(pairAddress);
+// pair.reserve0, pair.reserve1, etc. are typed as BN
+```
+
+### Constants
+
+```typescript
+import { PROGRAM_ID, SEEDS } from "@omnipair/program-interface";
+
+console.log(PROGRAM_ID.toBase58());
+// "omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE"
+
+console.log(SEEDS);
+// { PAIR: "gamm_pair", POSITION: "gamm_position", ... }
+```
+
+### PDA Utilities
+
+```typescript
+import { 
+  derivePairAddress, 
+  deriveUserPositionAddress,
+  deriveReserveVaultAddress,
+  deriveCollateralVaultAddress
+} from "@omnipair/program-interface";
+```
+
+---
+
+## Usage Examples
+
+### Initialize Program
+
+```typescript
+import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
+import { Connection, PublicKey, Keypair } from "@solana/web3.js";
+import { IDL, Omnipair, PROGRAM_ID } from "@omnipair/program-interface";
+
+// Setup connection
+const connection = new Connection("https://api.mainnet-beta.solana.com");
+
+// Create provider with wallet
+const wallet = new Wallet(Keypair.generate()); // Use your wallet
+const provider = new AnchorProvider(connection, wallet, {
+  commitment: "confirmed",
+});
+
+// Initialize typed program
+const program = new Program<Omnipair>(IDL, PROGRAM_ID, provider);
+```
+
+### Derive PDAs
+
+```typescript
+import { derivePairAddress, deriveUserPositionAddress } from "@omnipair/program-interface";
+import { PublicKey } from "@solana/web3.js";
+
+// Token mints (must be ordered lexicographically)
+const token0 = new PublicKey("So11111111111111111111111111111111111111112"); // SOL
+const token1 = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // USDC
+
+// Derive pair PDA
+const [pairAddress, pairBump] = derivePairAddress(token0, token1, paramsHash);
+
+// Derive user position PDA
+const userWallet = new PublicKey("...");
+const [positionAddress, positionBump] = deriveUserPositionAddress(pairAddress, userWallet);
+```
+
+### Fetch Accounts
+
+```typescript
+// Fetch pair account
+const pair = await program.account.pair.fetch(pairAddress);
+
+console.log("Virtual Reserve0:", pair.reserve0.toString());
+console.log("Virtual Reserve1:", pair.reserve1.toString());
+console.log("Cash Reserve0:", pair.cashReserve0.toString());
+console.log("Cash Reserve1:", pair.cashReserve1.toString());
+console.log("Total Debt0:", pair.totalDebt0.toString());
+console.log("Total Debt1:", pair.totalDebt1.toString());
+console.log("LP Supply:", pair.totalSupply.toString());
+console.log("Swap Fee:", pair.swapFeeBps, "bps");
+
+// Fetch user position
+const position = await program.account.userPosition.fetch(positionAddress);
+
+console.log("Collateral0:", position.collateral0.toString());
+console.log("Collateral1:", position.collateral1.toString());
+console.log("Debt0 Shares:", position.debt0Shares.toString());
+console.log("Debt1 Shares:", position.debt1Shares.toString());
+```
+
+### Execute Swap
+
+```typescript
+import { BN } from "@coral-xyz/anchor";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
+
+// Get token accounts
+const userToken0Account = await getAssociatedTokenAddress(pair.token0, wallet.publicKey);
+const userToken1Account = await getAssociatedTokenAddress(pair.token1, wallet.publicKey);
+
+// Build and send swap transaction
+const tx = await program.methods
+  .swap({
+    amountIn: new BN(1_000_000),      // 1 USDC (6 decimals)
+    minAmountOut: new BN(4_500_000),  // Minimum 0.0045 SOL (9 decimals)
+    isToken0In: false,                 // Swapping token1 for token0
+  })
+  .accounts({
+    pair: pairAddress,
+    rateModel: pair.rateModel,
+    futarchyAuthority: futarchyAuthorityAddress,
+    reserve0Vault: reserve0VaultAddress,
+    reserve1Vault: reserve1VaultAddress,
+    userToken0Account,
+    userToken1Account,
+    payer: wallet.publicKey,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    systemProgram: SystemProgram.programId,
+  })
+  .rpc();
+
+console.log("Swap tx:", tx);
+```
+
+### Add Liquidity
+
+```typescript
+const tx = await program.methods
+  .addLiquidity({
+    amount0Desired: new BN(1_000_000_000), // 1 SOL
+    amount1Desired: new BN(200_000_000),   // 200 USDC
+    amount0Min: new BN(990_000_000),       // 1% slippage
+    amount1Min: new BN(198_000_000),       // 1% slippage
+  })
+  .accounts({
+    pair: pairAddress,
+    lpMint: pair.lpMint,
+    userLpAccount: userLpTokenAccount,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+### Borrow
+
+```typescript
+// First add collateral
+await program.methods
+  .addCollateral({
+    amount: new BN(1_000_000_000), // 1 SOL as collateral
+    token: pair.token0,
+  })
+  .accounts({
+    pair: pairAddress,
+    userPosition: positionAddress,
+    // ... other accounts
+  })
+  .rpc();
+
+// Then borrow against it
+await program.methods
+  .borrow({
+    amount: new BN(100_000_000), // Borrow 100 USDC
+    token: pair.token1,
+  })
+  .accounts({
+    pair: pairAddress,
+    userPosition: positionAddress,
+    // ... other accounts
+  })
+  .rpc();
+```
+
+### Listen to Events
+
+```typescript
+// Subscribe to swap events
+const listener = program.addEventListener("SwapEvent", (event, slot) => {
+  console.log("Swap detected at slot:", slot);
+  console.log("Amount in:", event.amountIn.toString());
+  console.log("Amount out:", event.amountOut.toString());
+  console.log("Is token0 in:", event.isToken0In);
+});
+
+// Later: remove listener
+program.removeEventListener(listener);
+```
+
+---
+
+## Type Reference
+
+### Account Types
+
+```typescript
+import type { 
+  Pair, 
+  UserPosition, 
+  RateModel, 
+  FutarchyAuthority 
+} from "@omnipair/program-interface";
+```
+
+### Instruction Argument Types
+
+```typescript
+import type {
+  InitializeAndBootstrapArgs,
+  AddLiquidityArgs,
+  RemoveLiquidityArgs,
+  SwapArgs,
+  AdjustCollateralArgs,
+  AdjustDebtArgs,
+  FlashloanArgs,
+} from "@omnipair/program-interface";
+```
+
+### Event Types
+
+```typescript
+import type {
+  SwapEvent,
+  AdjustLiquidityEvent,
+  AdjustCollateralEvent,
+  AdjustDebtEvent,
+  UserPositionLiquidatedEvent,
+  FlashloanEvent,
+  ClaimProtocolFeesEvent,
+} from "@omnipair/program-interface";
+```
+
+---
+
+## Helper Functions
+
+### Calculate Swap Output
+
+```typescript
+function calculateSwapOutput(
+  amountIn: BN,
+  reserveIn: BN,
+  reserveOut: BN,
+  swapFeeBps: number
+): BN {
+  const FEE_DENOMINATOR = 10_000;
+  const amountInAfterFee = amountIn.muln(FEE_DENOMINATOR - swapFeeBps).divn(FEE_DENOMINATOR);
+  
+  // Constant product formula: Δy = (Δx × y) / (x + Δx)
+  const numerator = amountInAfterFee.mul(reserveOut);
+  const denominator = reserveIn.add(amountInAfterFee);
+  
+  return numerator.div(denominator);
+}
+```
+
+### Calculate User Debt
+
+```typescript
+function calculateUserDebt(
+  userShares: BN,
+  totalDebt: BN,
+  totalShares: BN
+): BN {
+  if (totalShares.isZero()) return new BN(0);
+  return userShares.mul(totalDebt).div(totalShares);
+}
+```
+
+### Calculate LP Value
+
+```typescript
+function calculateLpValue(
+  lpAmount: BN,
+  totalSupply: BN,
+  reserve0: BN,
+  reserve1: BN
+): { amount0: BN; amount1: BN } {
+  const amount0 = lpAmount.mul(reserve0).div(totalSupply);
+  const amount1 = lpAmount.mul(reserve1).div(totalSupply);
+  return { amount0, amount1 };
+}
+```
+
+---
+
+## Error Handling
+
+```typescript
+import { AnchorError } from "@coral-xyz/anchor";
+
+try {
+  await program.methods.borrow({ ... }).rpc();
+} catch (err) {
+  if (err instanceof AnchorError) {
+    switch (err.error.errorCode.code) {
+      case "BorrowingPowerExceeded":
+        console.error("Not enough collateral to borrow this amount");
+        break;
+      case "BorrowExceedsReserve":
+        console.error("Not enough liquidity in the pool");
+        break;
+      case "ReduceOnlyMode":
+        console.error("Protocol is in reduce-only mode");
+        break;
+      default:
+        console.error("Program error:", err.error.errorMessage);
+    }
+  }
+  throw err;
+}
+```
+
+---
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="GitHub Source" icon="github" href="https://github.com/omnipair/omnipair-rs/tree/main/packages/program-interface">
+    SDK source code
+  </Card>
+  <Card title="Anchor Documentation" icon="book" href="https://www.anchor-lang.com/docs">
+    Anchor framework docs
+  </Card>
+</CardGroup>

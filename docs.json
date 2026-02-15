@@ -92,6 +92,25 @@
         ]
       },
       {
+        "tab": "Developers",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "developers/overview"
+            ]
+          },
+          {
+            "group": "Integration",
+            "pages": [
+              "developers/program",
+              "developers/sdk",
+              "developers/api"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Code Reference",
         "hidden": true,
         "groups": [
