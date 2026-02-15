@@ -6,9 +6,10 @@ description: "Omnipair's risk management and safety mechanisms."
 Bad debt can occur in any lending pool when the market value of collateral rapidly decreases, causing it to fall below the required collateral threshold (LTV). Omnipair employs innovative mechanisms to effectively control and recover from bad debt accrual:
 
 - **Isolated Pools** Insolvencies remain isolated within their respective pools and are not shared across the protocol, safeguarding overall systemic health.
-- **Collateral Streaming** Rather than instantly liquidating collateral into the AMM—which can cause front-running, sandwich attacks, or cascading liquidations—collateral is gradually streamed back into reserves via a time-based decay model, similar to a continuous gradual Dutch auction (GDA).
+- **Pessimistic EMA Pricing** Omnipair uses a double-EMA system for collateral valuation: a symmetric EMA (configurable half-life) and a directional EMA that snaps down instantly on price drops but rises gradually. The protocol always uses the more conservative price — $\min(P_{\text{directional}}, P_{\text{symmetric}})$ — ensuring rapid response to adverse price movements while preventing manipulation via temporary price spikes.
+- **Impact-Based Collateral Valuation** Rather than using linear price × quantity valuation, collateral is valued by simulating the actual AMM swap needed to liquidate it. This accounts for price impact, ensuring large positions cannot borrow more than their collateral can actually cover in liquidation. Virtual reserves are reconstructed at the pessimistic EMA price while preserving the AMM invariant.
 - **Socialized Losses** Any residual bad debt manifests as permanent loss (PL) for liquidity providers. These losses are socialized proportionally among all LPs through adjustments to the pool's reserves (the `k` invariant). This prevents bank-run scenarios common in traditional lending protocols, where early exitors evade losses, leaving later participants exposed. LPs who exit immediately after insolvency realize their losses instantly, whereas those who remain may recover value over time.
-- **Dynamic Collateral Factor** Collateral factors (LTV ratios) adjust dynamically based on an internal liquidity oracle monitoring pool liquidity conditions. This reduces insolvency risks by tightening collateral requirements during periods of low liquidity, thereby minimizing potential bad debt events.
+- **Dynamic Collateral Factor** Collateral factors (LTV ratios) adjust dynamically based on pool liquidity and existing debt utilization. The CF accounts for price impact of liquidating collateral, automatically tightening for larger positions or when pool utilization is high. A 5% LTV buffer between borrow and liquidation thresholds provides users time to manage positions before liquidation.
 - **Recoverable Losses** LP permanent losses can be potentially recovered through future collateral price appreciation, accrued borrowing interest, and ongoing swap fee revenues, gradually restoring reserves and value.
 
 ## Recursive Leverage & Bad Debt Analysis
@@ -39,8 +40,9 @@ Traditional liquidation:
 Omnipair's solution:
 
 - Debt is **written off** immediately once under collateralization is detected.
-- Collateral isn't instantly sold—instead, it is **streamed gradually** back into pool reserves.
-- This slow drip replenishes pool reserves without abrupt market impact or external liquidator reliance.
+- Collateral is seized and added to pool reserves, with a **liquidation penalty** benefiting LPs.
+- A **liquidator incentive** rewards callers, making liquidation permissionless and reliable.
+- The **pessimistic EMA pricing** ensures liquidations trigger before positions become deeply insolvent.
 
 ### Summary:
 

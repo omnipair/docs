@@ -195,7 +195,7 @@
     "/liquidate": {
       "post": {
         "summary": "Liquidate an undercollateralized position",
-        "description": "Liquidates an undercollateralized position by writing off debt and streaming collateral to the pool.",
+        "description": "Liquidates an undercollateralized position by writing off debt and seizing collateral.",
         "operationId": "liquidate",
         "responses": {
           "200": {

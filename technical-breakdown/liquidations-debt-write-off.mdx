@@ -1,134 +1,212 @@
 ---
-title: "Liquidations: Debt write-off"
-description: "Explanation of Omnipair's liquidation mechanism using debt write-off."
+title: "Liquidations & Collateral Valuation"
+description: "Explanation of Omnipair's liquidation mechanism, impact-based collateral valuation, and pessimistic pricing."
 ---
 
-Omnipair's liquidation mechanism fundamentally differs from traditional DeFi lending protocols. Instead of relying on auctions or forced asset sales, Omnipair leverages an **immediate debt write-off** mechanism, enhancing system stability and protecting liquidity providers (LPs).
+Omnipair's liquidation mechanism fundamentally differs from traditional DeFi lending protocols. Instead of relying on auctions or external price oracles, Omnipair uses **impact-aware collateral valuation** with **pessimistic EMA pricing** to determine liquidation thresholds and execute debt write-offs.
 
-## Problem: Traditional Liquidation Risks
+## Impact-Based Collateral Valuation
 
-In traditional lending protocols (e.g., Aave, Compound), liquidation occurs via third-party liquidators. Liquidators repay borrower debts in exchange for discounted collateral. This causes several critical issues:
-
-- **Instant liquidation**: Sudden collateral sales create market impacts, price slippage, and cascading liquidations.
-- **Reliance on liquidators**: External liquidators may fail or delay during market volatility or network congestion.
-- **Oracle dependency**: Real-time price oracle reliance introduces manipulation risks.
-
-These risks are particularly pronounced in volatile, highly leveraged, or long-tail asset markets.
-
-## Omnipair's Solution: Debt Write-off
-
-Omnipair solves these issues through an internal, oracle-free liquidation process:
-
-### Debt Write-off
-
-When a borrower crosses the liquidation threshold (collateral value \< debt value based on EMA pricing), their debt is immediately removed from the debt accounting pool. This requires no external liquidator.
-
-## Technical Explanation
-
-### Notations:
-
-- Let:
-  - $C_0$: Collateral amount in Token0
-  - $D_1$: Debt amount in Token1
-  - $\text{EMA}_{1 \rightarrow 0}$: Exponential Moving Average price of Token1 denominated in Token0
-  - $CF$: Collateral Factor (e.g., 85%)
-
-### Liquidation Condition:
-
-A borrower becomes insolvent if:
+Traditional lending protocols value collateral linearly:
 
 $$
-D_1 \cdot \text{EMA}_{1 \rightarrow 0} > C_0 \cdot CF
+V_{\text{linear}} = \text{Collateral} \times P_{\text{oracle}}
 $$
 
-### Debt Write-off Mechanism:
-
-Upon insolvency detection:
-
-- Borrower's debt ($D_1$) is immediately subtracted from the pool's total debt:
-
-  $$
-  D_{\text{total}}' = D_{\text{total}} - D_x
-  $$
-- Borrower's collateral ($C_0$) ownership is transferred internally to the pool.
-
-### Collateral Streaming Mechanics:
-
-Collateral is gradually released back into pool reserves over time, using an exponential decay function. Define:
-
-- $t$: Current time
-- $t_0$: Insolvency event timestamp
-- $\alpha$: Streaming rate constant (determines speed of collateral release)
-
-Collateral released at time $t$ after insolvency event:
+This approach fails to account for the **price impact** of actually liquidating that collateral through the AMM. Omnipair instead calculates collateral value by simulating the swap:
 
 $$
-C_{\text{released}}(t) = C_0 \cdot \left(1 - e^{-\alpha (t - t_0)}\right)
+V_{\text{impact}} = \text{CPCurve.calculate\_amount\_out}(R_{\text{collateral}}, R_{\text{debt}}, \text{Collateral})
 $$
 
-Collateral remaining (yet to be released) at time $t$:
+Using the constant product formula:
 
 $$
-C_{\text{remaining}}(t) = C_0 \cdot e^{-\alpha (t - t_0)}
+\Delta y = \frac{\Delta x \cdot y}{x + \Delta x}
 $$
 
-This ensures a smooth, predictable collateral returns, preventing market shocks.
+This ensures the protocol never overestimates what it can actually recover by selling collateral.
 
-### Solvency Restoration:
+### Why Impact Matters
 
-Pool reserves are replenished continuously over time, progressively restoring solvency:
+For small positions, linear and impact valuations are similar. But as collateral size increases relative to pool reserves, price impact becomes significant:
 
-$$
-R_{\text{new}}(t) = R_{\text{old}} + C_{\text{released}}(t)
-$$
+| Collateral (% of Reserve) | Linear Value | Impact Value | Difference |
+|---------------------------|--------------|--------------|------------|
+| 1% | 10,000 | 9,901 | -1% |
+| 10% | 100,000 | 90,909 | -9% |
+| 50% | 500,000 | 333,333 | -33% |
 
-## Practical Example:
+Without impact-aware valuation, large positions could borrow more than their collateral can actually cover in liquidation.
 
-Suppose:
+## Pessimistic EMA Pricing
 
-- Collateral Factor: $CF = 85\%$
-- Initial collateral: $C_0 = 100$ Token X
-- Debt: $D_1 = 90$ Token1
-- Initially, EMA: $\text{EMA}_{1 \rightarrow 0} = 1.0$
+Before calculating collateral value, Omnipair reconstructs **virtual reserves at the pessimistic price** rather than using spot reserves directly.
 
-Initially solvent condition:
+### Double-EMA System
 
-$$
-90 \times 1.0 = 90 \leq 100 \times 0.85 = 85 \quad\text{(initially insolvent scenario is false, so actually solvent initially)}
-$$
+Omnipair maintains two EMAs for each token price:
 
-If EMA price suddenly drops to $0.7$:
+**1. Symmetric EMA** — Standard two-way smoothing (configurable half-life: 1 min to 12 hours):
 
 $$
-90 \times 0.7 = 63 > 100 \times 0.85 = 85 \quad\text{(now insolvent)}
+\text{EMA}_{\text{sym}}(t) = \alpha \cdot P_{\text{spot}} + (1 - \alpha) \cdot \text{EMA}_{\text{sym}}(t-1)
 $$
 
-This triggers liquidation:
+**2. Directional EMA** — Asymmetric behavior (fixed 3-second half-life):
+- **On price drop:** Snaps down instantly → $\text{EMA}_{\text{dir}} = \min(\text{EMA}_{\text{dir}}, P_{\text{spot}})$
+- **On price rise:** Rises gradually via standard EMA calculation
 
-- Debt ($90$ Token Y) immediately written off.
-- Collateral ($100$ Token X) streams back to reserves gradually with streaming rate $\alpha = 0.1 \text{ day}^{-1}$.
+### Pessimistic Price
 
-Collateral returned after 1 day:
-
-$$
-C_{\text{released}}(1) = 100 \cdot (1 - e^{-0.1 \cdot 1}) \approx 9.5 \text{ Token0}
-$$
-
-Collateral returned after 7 days:
+The protocol uses the more conservative of the two EMAs:
 
 $$
-C_{\text{released}}(7) = 100 \cdot (1 - e^{-0.1 \cdot 7}) \approx 50.3 \text{ Token0}
+P_{\text{pessimistic}} = \min(P_{\text{directional}}, P_{\text{symmetric}})
 $$
 
-This gradual restoration prevents sharp impacts on liquidity reserves.
+This ensures:
+- Rapid price drops are captured immediately (directional EMA snaps down)
+- Price manipulation via temporary spikes is ineffective (must sustain for ~50 slots)
+- Collateral is always valued conservatively
 
-## Advantages of Omnipair's Approach:
+### Constructing Virtual Reserves
 
-- **No oracle risk**: EMA-based solvency checks remove real-time oracle dependencies.
-- **Market stability**: Smooth recovery prevents sudden price impacts or liquidation cascades.
-- **LP Protection**: Predictable collateral replenishment secures LP capital even during volatility.
-- **Autonomous system**: Eliminates external liquidators, ensuring protocol robustness.
+Virtual reserves are reconstructed at the pessimistic price while preserving the AMM invariant $k = x \cdot y$:
 
-## Summary:
+$$
+x_{\text{virtual}} = \sqrt{\frac{k}{P_{\text{pessimistic}}}}
+$$
 
-Omnipair's **Debt Write-off & Streaming Collateral** mechanism redefines liquidation as a stable, internalized, and predictable process, effectively managing and mitigating risks typically associated with traditional DeFi liquidations.
+$$
+y_{\text{virtual}} = \sqrt{k \cdot P_{\text{pessimistic}}}
+$$
+
+These virtual reserves are then used for all collateral valuation and CF calculations, ensuring consistency between borrowing limits and liquidation thresholds.
+
+## Liquidation Mechanism
+
+### Liquidation Condition
+
+A position is liquidatable when debt exceeds the borrow limit:
+
+$$
+\text{Debt} \geq V_{\text{impact}} \times \text{Liquidation CF}
+$$
+
+Where $V_{\text{impact}}$ is calculated using virtual reserves at the pessimistic price.
+
+### Partial vs Full Liquidation
+
+**Solvent positions** (collateral value > debt): Partial liquidation using close factor
+- Only a portion of debt is written off per liquidation call
+- Prevents over-liquidation of recoverable positions
+
+**Insolvent positions** (debt > collateral value): Full debt write-off
+- All remaining debt is written off
+- Bad debt is socialized to LPs through reduced pool reserves
+
+### Collateral Seizure
+
+When liquidation occurs:
+
+1. **Base collateral** is calculated with price impact:
+   $$
+   \text{Collateral}_{\text{base}} = \text{CPCurve.calculate\_amount\_in}(R_{\text{collateral}}, R_{\text{debt}}, \text{Debt to writeoff})
+   $$
+
+2. **Liquidation penalty** is added (paid by borrower, benefits LPs):
+   $$
+   \text{Collateral}_{\text{total}} = \text{Collateral}_{\text{base}} \times (1 + \text{Penalty BPS} / 10000)
+   $$
+
+3. **Liquidator incentive** is paid from the base amount:
+   $$
+   \text{Incentive} = \text{Collateral}_{\text{base}} \times \text{Incentive BPS} / 10000
+   $$
+
+4. **Remaining collateral** goes to pool reserves (LPs benefit from penalty minus incentive)
+
+### Flow of Funds
+
+```
+Seized Collateral
+    ├── Liquidator Incentive → Caller's token account
+    └── Remainder → Pool reserves (cash_reserve + reserve)
+```
+
+## Collateral Factor System
+
+### Two CF Values
+
+The system maintains two distinct collateral factors:
+
+| CF Type | Purpose | Relationship |
+|---------|---------|--------------|
+| **Liquidation CF** | Threshold for liquidation | Base CF |
+| **Borrow CF** | Maximum for new borrows | Liquidation CF × 0.95 |
+
+The 5% LTV buffer ensures users have time to add collateral or repay before liquidation.
+
+### Dynamic vs Fixed CF
+
+**Dynamic CF** (default): Calculated from AMM curve, accounts for:
+- Price impact of liquidating collateral
+- Existing pool debt utilization
+- Capped at 85% maximum
+
+**Fixed CF** (optional): Pool-specific override for stable pairs or special use cases.
+
+### Applied Min CF
+
+Each user position stores `applied_min_cf_bps` — the CF at the time of borrowing. This protects users:
+
+$$
+\text{Effective CF} = \max(\text{Current CF}, \text{Applied Min CF})
+$$
+
+If pool conditions cause CF to decrease after borrowing, users keep their original CF until they interact with the position again.
+
+## Security Properties
+
+### Manipulation Resistance
+
+The pessimistic pricing system ensures:
+
+1. **Spot price manipulation** cannot increase borrowing capacity (uses EMA, not spot)
+2. **Large positions** cannot borrow more than liquidation can recover (impact-aware valuation)
+3. **Split attacks** are mitigated (total borrowable across split accounts ≤ single account)
+
+### Invariant: Borrow Limit ≤ Liquidation Limit
+
+Both borrowing and liquidation use the same valuation method:
+
+$$
+\text{Borrow Limit} = V_{\text{impact}} \times \text{Borrow CF}
+$$
+
+$$
+\text{Liquidation Limit} = V_{\text{impact}} \times \text{Liquidation CF}
+$$
+
+Since Borrow CF = Liquidation CF × 0.95, the borrow limit is always strictly below the liquidation threshold for any collateral size.
+
+## Advantages
+
+- **No oracle dependency**: All pricing derived from on-chain AMM state with EMA smoothing
+- **Impact-aware**: Large positions automatically get lower effective CF
+- **Manipulation-resistant**: Pessimistic pricing prevents front-running and price manipulation
+- **Permissionless liquidation**: Anyone can call liquidate, incentivized by liquidator reward
+- **LP protection**: Liquidation penalty flows to LPs, partially offsetting bad debt
+
+## Summary
+
+Omnipair's liquidation system combines:
+
+| Component | Purpose |
+|-----------|---------|
+| **Double-EMA** | Manipulation-resistant price smoothing |
+| **Pessimistic pricing** | Conservative collateral valuation |
+| **Impact-aware CF** | Accounts for actual liquidation slippage |
+| **Partial liquidation** | Prevents over-liquidation of solvent positions |
+| **Debt write-off** | Immediate bad debt resolution without auctions |

@@ -22,9 +22,9 @@ pub struct UserPosition {
     pub collateral0: u64,
     pub collateral1: u64,
     
-    // Debt tracking
-    pub debt0_shares: u64,
-    pub debt1_shares: u64,
+    // Debt tracking (u128 for precision)
+    pub debt0_shares: u128,
+    pub debt1_shares: u128,
 
     // PDA bump
     pub bump: u8,
@@ -57,12 +57,12 @@ pub struct UserPosition {
   Amount of token1 deposited as collateral.
 </ParamField>
 
-<ParamField body="debt0_shares" type="u64">
-  Debt shares for token0. Used to calculate actual debt including interest.
+<ParamField body="debt0_shares" type="u128">
+  Debt shares for token0. Used to calculate actual debt including interest. Stored as `u128` for precision.
 </ParamField>
 
-<ParamField body="debt1_shares" type="u64">
-  Debt shares for token1. Used to calculate actual debt including interest.
+<ParamField body="debt1_shares" type="u128">
+  Debt shares for token1. Used to calculate actual debt including interest. Stored as `u128` for precision.
 </ParamField>
 
 <ParamField body="bump" type="u8">
@@ -79,13 +79,55 @@ The user position account is a PDA derived from:
 
 Where `POSITION_SEED_PREFIX = b"gamm_position"`.
 
+## Debt Shares Mechanism
+
+Debt is tracked using a **share-based system** that allows interest to accrue globally without updating each user's position individually.
+
+### How It Works
+
+Instead of storing absolute debt amounts, users hold **debt shares** that represent their proportion of the pool's total debt. As interest accrues, `total_debt` increases but shares remain constant, so each share represents progressively more debt.
+
+### Initial Scaling
+
+The first borrow creates shares with a $10^6$ scaling factor for precision:
+
+```
+shares = amount × 1,000,000
+```
+
+### Subsequent Borrows
+
+New shares are calculated proportionally:
+
+```
+new_shares = ceil(amount × total_shares / total_debt)
+```
+
+### Debt Calculation
+
+User's actual debt is calculated from their shares:
+
+```
+user_debt = ceil(user_shares × total_debt / total_shares)
+```
+
+### Rounding Rules (Protocol-Favorable)
+
+| Operation | Rounding | Effect |
+|-----------|----------|--------|
+| Borrowing | Round UP shares | User gets slightly more debt |
+| Debt calculation | Round UP | User owes slightly more |
+| Repayment | Round DOWN shares burned | Protocol retains dust |
+
+This ensures the protocol never loses value due to rounding.
+
 ## Key Methods
 
-### `calculate_debt0(total_debt0: u64, total_debt0_shares: u64) -> Result<u64>`
-Calculates the actual debt0 amount (including accrued interest) from debt shares.
+### `calculate_debt0(total_debt0: u64, total_debt0_shares: u128) -> Result<u64>`
+Calculates the actual debt0 amount (including accrued interest) from debt shares using ceiling division.
 
-### `calculate_debt1(total_debt1: u64, total_debt1_shares: u64) -> Result<u64>`
-Calculates the actual debt1 amount (including accrued interest) from debt shares.
+### `calculate_debt1(total_debt1: u64, total_debt1_shares: u128) -> Result<u64>`
+Calculates the actual debt1 amount (including accrued interest) from debt shares using ceiling division.
 
 ### `get_remaining_borrow_limit(pair: &Pair, debt_token: &Pubkey, applied_min_cf_bps: u16) -> Result<u64>`
 Calculates the remaining borrow limit for a given debt token.

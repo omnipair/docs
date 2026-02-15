@@ -75,11 +75,10 @@
           {
             "group": "Resources",
             "pages": [
-              "documentation/resources/first-link",
+              "documentation/resources/security",
+              "documentation/resources/addresses",
               "documentation/resources/faq",
               "documentation/resources/risks",
-              "documentation/resources/addresses",
-              "documentation/resources/access-controls",
               "documentation/resources/code-licensing"
             ]
           },

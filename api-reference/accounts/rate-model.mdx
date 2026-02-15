@@ -1,55 +1,116 @@
 ---
 title: 'Rate Model'
-description: 'Interest rate model configuration'
+description: 'Fully parameterizable interest rate model configuration'
 ---
 
 # Rate Model
 
-The `RateModel` account stores the interest rate model parameters for calculating dynamic interest rates based on utilization.
+The `RateModel` account stores the interest rate model parameters for calculating dynamic interest rates based on utilization. The model is fully parameterizable, allowing customization of rate behavior for different pool types.
 
 ## Account Structure
 
 ```rust
 #[account]
 pub struct RateModel {
-    /// exp_rate: NAD/second (k_real = exp_rate / NAD)
+    /// exp_rate: NAD/millisecond (k_real = exp_rate / NAD)
+    /// Derived from half_life_ms: exp_rate = ln(2) / half_life_ms
     pub exp_rate: u64,
-    /// utilization band edges (NAD-scaled: 0..NAD)
+    /// Utilization band edges (NAD-scaled: 0..NAD)
     pub target_util_start: u64,
     pub target_util_end: u64,
+    /// Rate adjustment half-life in milliseconds
+    pub half_life_ms: u64,
+    /// Minimum interest rate floor (NAD-scaled)
+    pub min_rate: u64,
+    /// Maximum interest rate ceiling (NAD-scaled, 0 = no cap)
+    pub max_rate: u64,
+    /// Initial interest rate for new pairs (NAD-scaled)
+    pub initial_rate: u64,
 }
 ```
 
 ## Fields
 
 <ParamField body="exp_rate" type="u64">
-  Exponential rate parameter in NAD/second. Controls how quickly rates adjust. Default: `ln(2) / 3600` (half-life of 1 hour).
+  Exponential rate parameter in NAD/millisecond. Derived from `half_life_ms` as `ln(2) / half_life_ms`. Controls how quickly rates adjust.
 </ParamField>
 
 <ParamField body="target_util_start" type="u64">
-  Lower bound of target utilization band (NAD-scaled). Default: 50% (5000 bps).
+  Lower bound of target utilization band (NAD-scaled). Below this, rates decay exponentially.
 </ParamField>
 
 <ParamField body="target_util_end" type="u64">
-  Upper bound of target utilization band (NAD-scaled). Default: 85% (8500 bps).
+  Upper bound of target utilization band (NAD-scaled). Above this, rates grow exponentially.
+</ParamField>
+
+<ParamField body="half_life_ms" type="u64">
+  Rate adjustment half-life in milliseconds. Lower = faster adjustments, Higher = slower adjustments. Bounded by `MIN_RATE_HALF_LIFE_MS` and `MAX_RATE_HALF_LIFE_MS`.
+</ParamField>
+
+<ParamField body="min_rate" type="u64">
+  Minimum interest rate floor (NAD-scaled). Rate will not drop below this value.
+</ParamField>
+
+<ParamField body="max_rate" type="u64">
+  Maximum interest rate ceiling (NAD-scaled). Rate will not exceed this value. Set to 0 for no cap.
+</ParamField>
+
+<ParamField body="initial_rate" type="u64">
+  Starting interest rate for new pairs using this model (NAD-scaled).
 </ParamField>
 
 ## Rate Calculation
 
-The rate model uses an exponential model with three utilization bands:
+The rate model uses an exponential formula with three utilization bands:
 
-1. **Low Utilization** (< `target_util_start`): Rate exponentially decays toward minimum rate
-2. **Target Utilization** (`target_util_start` to `target_util_end`): Rate remains flat
-3. **High Utilization** (> `target_util_end`): Rate exponentially grows (no cap)
+### Utilization Bands
 
-The rate calculation uses:
-- Exponential decay/growth: `r(t) = r0 * e^(±k*t)`
-- Integration for interest accrual: `interest = debt * integral / NAD`
+| Band | Condition | Rate Behavior |
+|------|-----------|---------------|
+| **Low** | $U <$ `target_util_start` | Rate decays exponentially toward `min_rate` |
+| **Optimal** | `target_util_start` $\leq U \leq$ `target_util_end` | Rate stays flat |
+| **High** | $U >$ `target_util_end` | Rate grows exponentially, capped at `max_rate` |
+
+### Rate Evolution
+
+$$
+r(t) = r(t-1) \cdot e^{\pm k \cdot \Delta t}
+$$
+
+Where $k = \ln(2) / \text{half\_life\_ms}$
+
+### Interest Accrual
+
+Interest is calculated using the integral of the rate function over time:
+
+$$
+\text{Interest} = \text{Debt} \times \text{Integral}
+$$
+
+$$
+\text{Integral} = \frac{r_{\text{end}} - r_{\text{start}}}{k} \div \text{MILLISECONDS\_PER\_YEAR}
+$$
+
+When rates hit min/max caps during a time window, the integral is split into the exponential portion and a flat portion.
+
+## Validation Rules
+
+Parameters must satisfy:
+
+- `target_util_start < target_util_end`
+- `target_util_start >= MIN_TARGET_UTIL_BPS` (1%)
+- `target_util_end <= MAX_TARGET_UTIL_BPS` (100%)
+- `MIN_RATE_HALF_LIFE_MS <= half_life_ms <= MAX_RATE_HALF_LIFE_MS`
+- `min_rate <= max_rate` (if max_rate > 0)
+- `min_rate <= initial_rate <= max_rate` (if max_rate > 0)
 
 ## Default Values
 
-- `exp_rate`: `ln(2) / 3600` (half-life of 1 hour)
-- `target_util_start`: 50% (5000 bps)
-- `target_util_end`: 85% (8500 bps)
-- Minimum rate: 1% (100 bps)
-
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `target_util_start` | 33% (3300 bps) | Start of optimal band |
+| `target_util_end` | 66% (6600 bps) | End of optimal band |
+| `half_life_ms` | 1 hour (3,600,000 ms) | Rate adjustment speed |
+| `min_rate` | 1% (100 bps) | Rate floor |
+| `max_rate` | 0 (no cap) | Rate ceiling |
+| `initial_rate` | 5% (500 bps) | Starting rate |

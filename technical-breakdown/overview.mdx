@@ -12,47 +12,56 @@ Each pool holds a token pair and provides:
 - Swap functionality via spot prices
 - Margin borrowing based on time-weighted EMA prices
 - Interest accrual via utilization-based dynamic rates
-- Liquidation through write-offs and streaming collateral
+- Liquidation through debt write-offs
 
 ## Pool Structure
 
-Each pool is defined by two tokens ($x$, $y$). Liquidity is added in a constant product — $(xy = k)$ where $k = L^2$ — fashion, and reserves are tracked. Each pool contains two types of reserves:
+Each pool is defined by two tokens ($x$, $y$). Liquidity is added in a constant product fashion where $xy = k$, and reserves are tracked using a three-tier accounting system:
 
-- **Virtual Reserve**
-- **Actual Reserve**
+| Reserve Type | Description |
+|--------------|-------------|
+| **Virtual Reserve** | Used for AMM pricing and swap execution |
+| **Cash Reserve** | Actual available liquidity in vaults |
+| **Debt** | Borrowed amounts outstanding |
+
+These are related by: $R_{\text{virtual}} = R_{\text{cash}} + R_{\text{debt}}$
+
+The protocol enforces the **solvency invariant**: $R_{\text{virtual}} \geq R_{\text{debt}}$, ensuring cash reserves never go negative.
 
 ### Spot Price
 
 Derived from the pool's token virtual reserves:
 
 $$
-\text{Spot Price }_{0 \rightarrow 1} = \frac{\text{Virtual Reserve}_1}{\text{Virtual Reserve}_0}
+\text{Spot Price}_{0 \rightarrow 1} = \frac{R^{\text{virtual}}_1}{R^{\text{virtual}}_0}
 $$
 
-Used for swap execution and is updated by every spot trade, while lent liquidity is not calculated in the virtual reserves:
+Used for swap execution following the constant-product formula:
 
 $$
-\text{Reserve}_{actual} = \text{Reserve}_{virtual} - \text{Reserve}_{debt}
+\Delta y = \frac{\Delta x \cdot y}{x + \Delta x}
 $$
 
-### EMA Price (Smoothed Lending Price)
+### Double-EMA Price System
 
-A time-weighted Exponential Moving Average of the spot price. EMA pricing smooths volatility and prevents manipulation around liquidation events.
+Omnipair uses a **double-EMA system** for lending operations:
 
+**1. Symmetric EMA** — Standard two-way smoothing with configurable half-life (1 min to 12 hours):
 $$
-\text{EMA}(t) = \alpha \cdot \text{Price}(t) + (1 - \alpha) \cdot \text{EMA}(t - 1)
-$$
-
-Where:
-
-$$
-\alpha = 1 - e^{-\frac{\Delta t}{\tau}}
+\text{EMA}_{\text{sym}}(t) = \alpha \cdot P_{\text{spot}} + (1 - \alpha) \cdot \text{EMA}_{\text{sym}}(t-1)
 $$
 
-- $\Delta t$: Time since last update
-- $(\tau)$: Exponential decay constant (half-life converted to continuous time)
+**2. Directional EMA** — Asymmetric: snaps down instantly on price drops, rises gradually (3-second half-life):
+$$
+\text{EMA}_{\text{dir}} = \begin{cases} \min(\text{EMA}_{\text{dir}}, P_{\text{spot}}) & \text{if price drops} \\ \text{EMA calculation} & \text{if price rises} \end{cases}
+$$
 
-This price is used to compute borrowing power and liquidation thresholds.
+**Pessimistic Price** — Used for all collateral calculations:
+$$
+P_{\text{pessimistic}} = \min(P_{\text{directional}}, P_{\text{symmetric}})
+$$
+
+This design ensures the protocol reacts immediately to adverse price movements while preventing manipulation through temporary price spikes.
 
 ## Borrowing & Collateralization
 
@@ -74,39 +83,102 @@ Solvency is checked against EMA prices, not spot, to prevent manipulation.
 
 ## Interest Rate Model
 
-Each pool uses a dynamic interest rate model that adjusts based on utilization:
+Each pool uses a fully parameterizable dynamic interest rate model that adjusts based on utilization:
 
 $$
-U = \frac{\text{TotalDebt}}{\text{Reserve}}
+U = \frac{\text{TotalDebt}}{\text{Reserve}_{\text{virtual}}}
 $$
 
-Depending on $( U )$, the borrow rate evolves:
+### Rate Model Parameters
 
-### Utilization Bands:
+| Parameter | Description |
+|-----------|-------------|
+| `target_util_start` | Lower bound of optimal utilization range |
+| `target_util_end` | Upper bound of optimal utilization range |
+| `half_life_ms` | Rate adjustment speed (lower = faster) |
+| `min_rate` | Minimum rate floor |
+| `max_rate` | Maximum rate ceiling (0 = no cap) |
+| `initial_rate` | Starting rate for new pairs |
 
-- **Low**: $( U < 33\% )$ → rate decays (halves) exponentially
-- **High**: $( U > 66\% )$ → rate grows (doubles) exponentially
-- **In-between**: rate remains stable
+### Utilization Bands
 
-The model uses an exponential formula with a tunable half-life ( T_1/2 ):
+- **Low** ($U <$ `target_util_start`): Rate decays exponentially toward `min_rate`
+- **Optimal** (`target_util_start` $\leq U \leq$ `target_util_end`): Rate stays flat
+- **High** ($U >$ `target_util_end`): Rate grows exponentially, capped at `max_rate`
 
-$$
-r_t = r_{t-1} \cdot 2^{\pm \frac{\Delta t}{T_{1/2}}}
-$$
-
-Accrued interest is computed as:
-
-$$
-\text{Interest} = \text{Debt} \cdot \text{Integral}
-$$
-
-Where the integral is calculated using:
+### Rate Evolution
 
 $$
-\int r(t) dt = \frac{r_{\text{end}} - r_{\text{start}}}{\ln(2) / T_{1/2}}
+r(t) = r(t-1) \cdot e^{\pm k \cdot \Delta t}
 $$
+
+Where $k = \ln(2) / \text{half\_life\_ms}$
+
+### Interest Accrual
+
+Interest is calculated using the integral of the rate function:
+
+$$
+\text{Interest} = \text{Debt} \times \text{Integral}
+$$
+
+$$
+\text{Integral} = \frac{r_{\text{end}} - r_{\text{start}}}{k} \div \text{MILLISECONDS\_PER\_YEAR}
+$$
+
+### Protocol Fee
+
+- Borrowers pay: `interest + protocol_fee`
+- LPs receive: Full interest amount
+- Protocol receives: `protocol_fee` (additive, not deducted from LP share)
 
 The rate is updated on any pool interaction (`swap`, `borrow`, `repay`, etc.).
+
+## Fee Surplus Accounting
+
+Protocol fees are tracked **implicitly** through the difference between actual vault balances and accounted cash reserves:
+
+$$
+\text{Fee Surplus} = R_{\text{vault}} - R_{\text{cash}}
+$$
+
+This surplus represents claimable protocol revenue that flows to the futarchy governance system.
+
+### Fee Sources
+
+**1. Swap Fees** — Split between LPs and protocol:
+
+$$
+\text{Futarchy Fee} = \text{Swap Fee} \times \frac{\text{swap\_bps}}{10000}
+$$
+
+The futarchy portion is transferred immediately to the authority account, while the LP portion increases both virtual and cash reserves.
+
+**2. Interest Protocol Fees** — Additive fee on borrower interest:
+
+$$
+\text{Protocol Fee} = \text{Interest} \times \frac{\text{interest\_bps}}{10000}
+$$
+
+### Cash Coverage Mechanism
+
+When interest accrues, the protocol handles fees carefully to maintain the solvency invariant:
+
+$$
+\text{Cash Covered Fee} = \min(\text{Protocol Fee}, R_{\text{cash}})
+$$
+
+- **Covered portion**: Reduces cash reserves, creating immediate surplus in vaults
+- **Uncovered portion**: Added to virtual reserves; LPs get temporary claim until borrowers repay
+
+This ensures the state transition equation $\Delta R_{\text{virtual}} = \Delta R_{\text{cash}} + \Delta R_{\text{debt}}$ holds even when cash reserves are low.
+
+### Fee Distribution
+
+The accumulated surplus is distributed via the futarchy governance system to:
+- Futarchy treasury
+- Buybacks vault  
+- Team treasury
 
 ## Liquidation & Solvency Enforcement
 
@@ -149,13 +221,15 @@ This model is similar to recursive borrowing in protocols like Compound or Aave,
 
 ## Summary
 
-| Mechanism           | Implementation                                |
-| ------------------- | --------------------------------------------- |
-| **Pricing**         | Spot (for swaps), EMA (for lending)           |
-| **Liquidations**    | Debt write-off                                |
-| **Interest Rates**  | Exponential decay/growth based on utilization |
-| **Borrowing Model** | Isolated per pool                             |
-| **Leverage**        | Recursive, within single pool                 |
-| **Oracles**         | Not required                                  |
+| Mechanism | Implementation |
+| --------- | -------------- |
+| **Pricing** | Spot (for swaps), Double-EMA with pessimistic pricing (for lending) |
+| **Solvency** | Three-tier reserves with state transition invariant |
+| **Liquidations** | Debt write-off with price impact calculation |
+| **Interest Rates** | Fully parameterizable exponential model with min/max caps |
+| **Borrowing Model** | Isolated per pool with impact-aware collateral factors |
+| **Leverage** | Recursive, within single pool |
+| **Fee Accounting** | Implicit surplus tracking; fees flow to futarchy governance |
+| **Oracles** | Not required |
 
 Omnipair combines capital efficiency with safety by avoiding systemic liquidation risks, external oracles, and governance bottlenecks.

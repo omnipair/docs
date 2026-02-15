@@ -12,42 +12,153 @@ Each pool holds a token pair and provides:
 - Swap functionality via spot prices
 - Margin borrowing based on time-weighted EMA prices
 - Interest accrual via utilization-based dynamic rates
-- Liquidation through write-offs and streaming collateral
+- Liquidation through debt write-offs
 
-Each pool is defined by two tokens ($x$, $y$). Liquidity is added in a constant product — $(xy = k)$ where $k = L^2$ — fashion, and reserves are tracked. Each pool contains two types of reserves:
+Each pool is defined by two tokens ($x$, $y$). Liquidity is added in a constant product fashion where $xy = k$, and reserves are tracked using a three-tier accounting system.
 
-- **Virtual Reserve**
-- **Actual Reserve**
+## Reserve Types
+
+Each pool maintains three distinct reserve values per token:
+
+| Reserve Type | Description | Usage |
+|--------------|-------------|-------|
+| **Virtual Reserve** (`reserve`) | Used for AMM pricing | Spot price calculation, swap execution |
+| **Cash Reserve** (`cash_reserve`) | Actual available liquidity in vaults | Withdrawal limits, borrowing limits |
+| **Debt** (`total_debt`) | Borrowed amounts outstanding | Interest accrual, solvency checks |
+
+These reserves are related by the fundamental equation:
+
+$$
+R_{\text{virtual}} = R_{\text{cash}} + R_{\text{debt}}
+$$
+
+## Solvency Invariant
+
+The protocol maintains strict invariants to ensure pool solvency:
+
+**1. Constant Product Invariant:**
+$$
+x_{\text{virtual}} \times y_{\text{virtual}} = k
+$$
+
+**2. Solvency Invariant:**
+$$
+R_{\text{virtual}} \geq R_{\text{debt}} \quad \Rightarrow \quad R_{\text{cash}} \geq 0
+$$
+
+**3. State Transition Equation:**
+
+For every operation, the following must hold:
+$$
+\Delta R_{\text{virtual}} = \Delta R_{\text{cash}} + \Delta R_{\text{debt}}
+$$
+
+| Operation | ΔR_virtual | ΔR_cash | ΔR_debt |
+|-----------|------------|---------|---------|
+| Borrow | 0 | −amount | +amount |
+| Repay | 0 | +amount | −amount |
+| Swap | +lp_fee | +lp_fee | 0 |
+| Add Liquidity | +amount | +amount | 0 |
+| Remove Liquidity | −amount | −amount | 0 |
+| Interest Accrual | +lp_share + uncovered_fee | −covered_fee | +total_cost |
+
+## Fee Surplus Accounting
+
+Protocol fees are tracked **implicitly** as the difference between actual vault token balances and the accounted cash reserves:
+
+$$
+\text{Fee Surplus} = R_{\text{vault}} - R_{\text{cash}}
+$$
+
+This surplus represents claimable protocol revenue that flows to the futarchy governance system.
+
+### How Fees Accumulate
+
+**Swap Fees:**
+- Swap fee is split: LP portion goes to reserves, futarchy portion goes directly to protocol
+- Only the LP portion increases `cash_reserve` and `reserve`
+- Futarchy fee is transferred immediately, not tracked in cash reserves
+
+**Interest Protocol Fees:**
+- When interest accrues, borrowers pay `interest + protocol_fee`
+- LPs receive the full interest amount (added to virtual reserves)
+- Protocol fee is tracked via the surplus mechanism
+
+### Cash Coverage for Interest Fees
+
+During interest accrual, the protocol handles protocol fees carefully to maintain the state transition invariant:
+
+$$
+\text{Cash Covered Fee} = \min(\text{Protocol Fee}, R_{\text{cash}})
+$$
+
+| Component | Effect | Description |
+|-----------|--------|-------------|
+| Cash Covered Fee | Reduces $R_{\text{cash}}$ | Creates immediate surplus in vault |
+| Uncovered Fee | Adds to $R_{\text{virtual}}$ | LPs get temporary claim until repayment |
+
+The state changes ensure the invariant holds:
+
+$$
+\Delta R_{\text{virtual}} = \text{LP Share} + (\text{Protocol Fee} - \text{Cash Covered Fee})
+$$
+$$
+\Delta R_{\text{cash}} = -\text{Cash Covered Fee}
+$$
+$$
+\Delta R_{\text{debt}} = \text{LP Share} + \text{Protocol Fee}
+$$
 
 ## Spot Price
 
 Derived from the pool's token virtual reserves:
 
 $$
-\text{Spot Price }_{0 \rightarrow 1} = \frac{\text{Virtual Reserve}_1}{\text{Virtual Reserve}_0}
+\text{Spot Price}_{0 \rightarrow 1} = \frac{R^{\text{virtual}}_1}{R^{\text{virtual}}_0}
 $$
 
-Used for swap execution and is updated by every spot trade, while lent liquidity is not calculated in the virtual reserves:
+Used for swap execution. Swaps follow the constant-product formula:
 
 $$
-\text{Reserve}_{actual} = \text{Reserve}_{virtual} - \text{Reserve}_{debt}
+\Delta y = \frac{\Delta x \cdot y}{x + \Delta x}
 $$
 
-## Time-weighted EMA Price (Lending price)
+## Double-EMA Price System
 
-A time-weighted Exponential Moving Average of the spot price. EMA pricing smooths volatility and prevents manipulation around liquidation events.
+Omnipair uses a **double-EMA system** with two distinct EMAs working together for lending operations:
 
-$$
-\text{EMA}(t) = \alpha \cdot \text{Price}(t) + (1 - \alpha) \cdot \text{EMA}(t - 1)
-$$
+### 1. Symmetric EMA (Two-Way)
 
-Where:
+Standard EMA that smooths price movements in both directions:
 
 $$
-\alpha = 1 - e^{-\frac{\Delta t}{\tau}}
+\text{EMA}_{\text{sym}}(t) = \alpha \cdot P_{\text{spot}}(t) + (1 - \alpha) \cdot \text{EMA}_{\text{sym}}(t - 1)
 $$
 
-- $\Delta t$: Time since last update
-- $(\tau)$: Exponential decay constant (half-life converted to continuous time)
+Where $\alpha = 1 - e^{-\Delta t / \tau}$ and $\tau$ is derived from the configurable **half-life** (1 minute to 12 hours).
 
-This price is used to compute borrowing power and liquidation thresholds.
+### 2. Directional EMA (One-Way, Asymmetric)
+
+Designed to track price drops instantly while smoothing upward movements:
+
+- **On price drop:** Snaps down instantly
+$$
+\text{EMA}_{\text{dir}} = \min(\text{EMA}_{\text{dir}}, P_{\text{spot}})
+$$
+
+- **On price rise:** Rises gradually via EMA calculation with a fixed 3-second half-life
+
+This asymmetric behavior ensures the protocol reacts immediately to adverse price movements while preventing manipulation through temporary price spikes.
+
+### Pessimistic Price
+
+For all collateral factor and liquidation calculations, the protocol uses the more conservative of the two EMAs:
+
+$$
+P_{\text{pessimistic}} = \min(P_{\text{directional}}, P_{\text{symmetric}})
+$$
+
+This pessimistic price ensures:
+- Rapid price drops are captured immediately via the directional EMA
+- Gradual price movements use the symmetric EMA's smoothing
+- Price manipulation attacks become prohibitively expensive (attacker must maintain manipulated price for ~50 slots)

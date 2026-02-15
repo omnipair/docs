@@ -83,6 +83,41 @@ The `revenue_distribution` determines how protocol revenue is split:
 
 **Constraint**: All three percentages must sum to exactly 10000 (100%).
 
+## Fee Flow from Pairs
+
+Protocol revenue accumulates in pair vaults as a **surplus** — the difference between actual vault balances and accounted cash reserves:
+
+$$
+\text{Claimable Fees} = R_{\text{vault}} - R_{\text{cash}}
+$$
+
+### Fee Sources
+
+| Source | How It Accumulates |
+|--------|-------------------|
+| **Swap Fees** | Futarchy portion of swap fee is transferred immediately to authority token accounts |
+| **Interest Fees** | Reduces `cash_reserve` during interest accrual, creating surplus in vault |
+
+### Claiming Protocol Fees
+
+The `claim_protocol_fees` instruction distributes accumulated surplus from a pair's vaults:
+
+1. **Calculate claimable amount** per token:
+   ```
+   claimable = vault_balance - cash_reserve
+   ```
+
+2. **Distribute to recipients** based on `revenue_distribution`:
+   - `buybacks_vault`: `claimable × buybacks_vault_bps / 10000`
+   - `team_treasury`: `claimable × team_treasury_bps / 10000`
+   - `futarchy_treasury`: Remainder (handles rounding dust)
+
+3. **Transfer tokens** directly from pair vaults to recipient token accounts
+
+<Note>
+The claim process does not modify the pair's `cash_reserve` or `reserve` values — it only transfers the surplus tokens that were never accounted as cash.
+</Note>
+
 ## PDA Derivation
 
 The futarchy authority account is a PDA derived from:

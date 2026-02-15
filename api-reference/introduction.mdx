@@ -51,17 +51,30 @@ The program is organized into several modules:
 ## Key Features
 
 ### Oracle-less Pricing
-- Uses EMA (Exponential Moving Average) of spot prices for debt valuation
+- Uses a **double-EMA system** (symmetric + directional) for debt valuation
+- Pessimistic pricing: `min(directional_ema, symmetric_ema)`
 - No external oracle dependencies
 
-### Dynamic Collateral Factors
-- Slippage-aware collateral factors derived from AMM reserves
-- Ensures lending doesn't break the AMM invariant
+### Impact-Aware Collateral Factors
+- Dynamic collateral factors derived from AMM reserves with price impact simulation
+- 5% LTV buffer between borrow limit and liquidation threshold
+- `applied_min_cf_bps` protection for existing positions
 
 ### Utilization-based Interest Rates
 - Interest rates adjust based on pool utilization
-- Exponential rate model with target utilization bands
+- Fully parameterizable exponential rate model with min/max caps
+- Target utilization bands with configurable bounds
 
 ### Isolated Collateral Pools
 - Each pair operates as an isolated lending market
 - No cross-pool risk exposure
+- Per-pair reduce-only mode available
+
+### Solvency Invariant
+- Three-tier reserve accounting: virtual, cash, and debt
+- State transition equation: `ΔR_virtual = ΔR_cash + ΔR_debt`
+- Protocol fees tracked as `vault_balance - cash_reserve`
+
+## Token Support<Note>
+Currently, Omnipair supports **standard SPL tokens**. Token-2022 support (including transfer fee tokens) is planned for a future release.
+</Note>

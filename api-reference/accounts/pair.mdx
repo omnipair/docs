@@ -20,34 +20,34 @@ pub struct Pair {
     pub token0_decimals: u8,
     pub token1_decimals: u8,
 
-    // pair parameters
+    // Pair parameters
     pub rate_model: Pubkey,
     pub swap_fee_bps: u16,
     pub half_life: u64,
     pub fixed_cf_bps: Option<u16>,
     
-    // Reserves
+    // Virtual Reserves (for AMM pricing)
     pub reserve0: u64,
     pub reserve1: u64,
 
-    // Protocol revenue reserves
-    pub protocol_revenue_reserve0: u64,
-    pub protocol_revenue_reserve1: u64,
+    // Cash Reserves (actual liquidity in vaults)
+    pub cash_reserve0: u64,
+    pub cash_reserve1: u64,
     
-    // Price tracking
-    pub last_price0_ema: u64,
-    pub last_price1_ema: u64,
-    pub last_update: i64,
+    // Price tracking (Double-EMA)
+    pub last_price0_ema: LastPriceEMA,
+    pub last_price1_ema: LastPriceEMA,
+    pub last_update: u64,
     
-    // Rates
+    // Interest rates
     pub last_rate0: u64,
     pub last_rate1: u64,
     
     // Debt tracking
     pub total_debt0: u64,
     pub total_debt1: u64,
-    pub total_debt0_shares: u64,
-    pub total_debt1_shares: u64,
+    pub total_debt0_shares: u128,  // u128 for precision
+    pub total_debt1_shares: u128,
     
     // LP liquidity tracking
     pub total_supply: u64,
@@ -59,6 +59,15 @@ pub struct Pair {
     pub params_hash: [u8; 32],
     pub version: u8,
     pub bump: u8,
+    pub vault_bumps: VaultBumps,
+    
+    pub reduce_only: bool,  // Per-pair reduce-only mode
+}
+
+// Double-EMA price tracking
+pub struct LastPriceEMA {
+    pub symmetric: u64,    // Standard two-way EMA
+    pub directional: u64,  // One-way EMA (snaps down, rises gradually)
 }
 ```
 
@@ -101,31 +110,31 @@ pub struct Pair {
 </ParamField>
 
 <ParamField body="reserve0" type="u64">
-  Current reserve of token0 in the pool (including accrued interest).
+  Virtual reserve of token0. Used for AMM pricing. Related to cash and debt by: `reserve = cash_reserve + total_debt`
 </ParamField>
 
 <ParamField body="reserve1" type="u64">
-  Current reserve of token1 in the pool (including accrued interest).
+  Virtual reserve of token1. Used for AMM pricing. Related to cash and debt by: `reserve = cash_reserve + total_debt`
 </ParamField>
 
-<ParamField body="protocol_revenue_reserve0" type="u64">
-  Accumulated protocol revenue from token0 (swap fees + interest fees).
+<ParamField body="cash_reserve0" type="u64">
+  Actual available liquidity of token0 in vaults. Protocol fees are tracked as `vault_balance - cash_reserve`.
 </ParamField>
 
-<ParamField body="protocol_revenue_reserve1" type="u64">
-  Accumulated protocol revenue from token1 (swap fees + interest fees).
+<ParamField body="cash_reserve1" type="u64">
+  Actual available liquidity of token1 in vaults. Protocol fees are tracked as `vault_balance - cash_reserve`.
 </ParamField>
 
-<ParamField body="last_price0_ema" type="u64">
-  Last EMA price of token0 in token1 terms, scaled by NAD (1e9).
+<ParamField body="last_price0_ema" type="LastPriceEMA">
+  Double-EMA price tracking for token0. Contains both `symmetric` (two-way) and `directional` (one-way) EMA values, scaled by NAD (1e9).
 </ParamField>
 
-<ParamField body="last_price1_ema" type="u64">
-  Last EMA price of token1 in token0 terms, scaled by NAD (1e9).
+<ParamField body="last_price1_ema" type="LastPriceEMA">
+  Double-EMA price tracking for token1. Contains both `symmetric` (two-way) and `directional` (one-way) EMA values, scaled by NAD (1e9).
 </ParamField>
 
-<ParamField body="last_update" type="i64">
-  Unix timestamp of last state update.
+<ParamField body="last_update" type="u64">
+  Slot number of last state update.
 </ParamField>
 
 <ParamField body="last_rate0" type="u64">
@@ -144,16 +153,20 @@ pub struct Pair {
   Total debt of token1 across all positions (including accrued interest).
 </ParamField>
 
-<ParamField body="total_debt0_shares" type="u64">
-  Total debt shares for token0. Used for proportional debt tracking.
+<ParamField body="total_debt0_shares" type="u128">
+  Total debt shares for token0. Used for proportional debt tracking. Stored as `u128` for precision.
 </ParamField>
 
-<ParamField body="total_debt1_shares" type="u64">
-  Total debt shares for token1. Used for proportional debt tracking.
+<ParamField body="total_debt1_shares" type="u128">
+  Total debt shares for token1. Used for proportional debt tracking. Stored as `u128` for precision.
 </ParamField>
 
 <ParamField body="total_supply" type="u64">
   Total supply of LP tokens. Includes MIN_LIQUIDITY that is permanently locked.
+</ParamField>
+
+<ParamField body="reduce_only" type="bool">
+  Per-pair reduce-only mode. When enabled, prevents new borrows and liquidity additions.
 </ParamField>
 
 <ParamField body="total_collateral0" type="u64">
@@ -186,6 +199,45 @@ The pair account is a PDA derived from:
 
 Where `PAIR_SEED_PREFIX = b"gamm_pair"`.
 
+## Reserve Relationship
+
+The three reserve types are related by the solvency invariant:
+
+```
+reserve (virtual) = cash_reserve + total_debt
+```
+
+### Fee Surplus
+
+Protocol fees are tracked **implicitly** as the surplus between actual vault balances and accounted cash reserves:
+
+$$
+\text{Fee Surplus} = R_{\text{vault}} - R_{\text{cash}}
+$$
+
+This surplus accumulates from two sources:
+
+| Fee Source | Mechanism |
+|------------|-----------|
+| **Swap Fees** | Futarchy portion transferred immediately; LP portion added to reserves |
+| **Interest Fees** | Cash-covered portion reduces `cash_reserve`, creating vault surplus |
+
+The surplus is claimable by the futarchy governance system via `claim_protocol_fees`.
+
+### Interest Fee Handling
+
+When interest accrues and cash reserves are limited, the protocol uses a cash coverage mechanism:
+
+```
+cash_covered_fee = min(protocol_fee, cash_reserve)
+uncovered_fee = protocol_fee - cash_covered_fee
+```
+
+- **Cash covered fee**: Reduces `cash_reserve`, creating immediate surplus
+- **Uncovered fee**: Added to `reserve` (virtual); LPs get temporary claim until borrowers repay
+
+This ensures the state transition invariant `ΔR_virtual = ΔR_cash + ΔR_debt` always holds.
+
 ## Key Methods
 
 ### `spot_price0_nad() -> u64`
@@ -195,17 +247,23 @@ Returns the current spot price of token0 in token1 terms, scaled by NAD.
 Returns the current spot price of token1 in token0 terms, scaled by NAD.
 
 ### `ema_price0_nad() -> u64`
-Returns the EMA price of token0 in token1 terms, scaled by NAD.
+Returns the symmetric EMA price of token0 in token1 terms, scaled by NAD.
 
 ### `ema_price1_nad() -> u64`
-Returns the EMA price of token1 in token0 terms, scaled by NAD.
+Returns the symmetric EMA price of token1 in token0 terms, scaled by NAD.
+
+### `directional_ema_price0_nad() -> u64`
+Returns the directional (one-way) EMA price of token0, scaled by NAD.
+
+### `directional_ema_price1_nad() -> u64`
+Returns the directional (one-way) EMA price of token1, scaled by NAD.
 
 ### `k() -> u128`
 Returns the constant product `reserve0 * reserve1`.
 
 ### `get_max_debt_and_cf_bps_for_collateral() -> (u64, u16, u16)`
-Calculates maximum debt, max CF, and liquidation CF for a given collateral amount using pessimistic pricing.
+Calculates maximum debt, borrow CF, and liquidation CF for a given collateral amount using pessimistic pricing and price impact simulation.
 
 ### `update() -> Result<()>`
-Updates EMA prices, interest rates, and applies accrued interest to reserves.
+Updates both symmetric and directional EMA prices, interest rates, and applies accrued interest to reserves and debt.
 

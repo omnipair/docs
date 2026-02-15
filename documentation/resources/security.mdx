@@ -1,0 +1,58 @@
+---
+title: "Security & Audits"
+description: "Security audits, protocol governance, and emergency controls."
+---
+
+## Audits
+
+Omnipair's smart contracts have undergone professional security audits to identify and address potential vulnerabilities before deployment.
+
+| Program | Auditor | Date | Report |
+| ------- | ------- | ---- | ------ |
+| Omnipair GAMM | [Ackee](https://ackee.xyz/) | Q1 2026 | [View](https://github.com/omnipair/omnipair-rs/tree/main/audits/ackee) |
+| Omnipair GAMM | [Offside Labs](https://offside.io/) | Q1 2026 | [View](https://github.com/omnipair/omnipair-rs/tree/main/audits/offsidelabs) |
+
+<Note>
+All audit reports are publicly available in the [omnipair-rs GitHub repository](https://github.com/omnipair/omnipair-rs/tree/main/audits).
+</Note>
+
+## Futarchy Authority
+
+The **Futarchy Authority** is a protocol-level account that controls revenue distribution and emergency protocol settings. It is currently controlled by the team multi-sig but will be transferred to DAO governance once the program becomes immutable.
+
+### Revenue Configuration
+
+The Futarchy Authority defines two key revenue parameters:
+
+| Parameter | Description |
+| --------- | ----------- |
+| `swap_bps` | Percentage of swap fees allocated to the protocol (remainder goes to LPs) |
+| `interest_bps` | Percentage of interest fees allocated to the protocol (remainder goes to LPs) |
+
+### Revenue Distribution
+
+Protocol fees are distributed to three recipients based on configurable percentages that must sum to 100%:
+
+| Recipient | Description |
+| --------- | ----------- |
+| **Futarchy Treasury** | DAO-controlled treasury for protocol development and grants |
+| **Buybacks Vault** | Funds allocated for protocol token buybacks via CDA |
+| **Team Treasury** | Team operational expenses and contributor compensation |
+
+### Fee Claiming
+
+The `claim_protocol_fees` instruction is **permissionless** — anyone can call it to trigger fee distribution from any pair. Fees are calculated as the surplus between vault balances and accounted cash reserves:
+
+```
+claimable_fees = vault_balance - cash_reserve
+```
+
+Tokens are transferred directly from pair vaults to recipient token accounts based on the distribution percentages.
+
+### Emergency Controls
+
+The Futarchy Authority includes a `global_reduce_only` flag that, when enabled, blocks new borrowing and liquidity additions across all pairs. This serves as an emergency mechanism to protect the protocol during adverse conditions.
+
+<Info>
+Once the Omnipair program is made immutable, control of the Futarchy Authority will be transferred to the DAO, enabling decentralized governance over revenue parameters and emergency controls.
+</Info>

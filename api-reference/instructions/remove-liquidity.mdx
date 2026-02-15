@@ -7,6 +7,28 @@ description: 'Remove liquidity from a trading pair and receive underlying tokens
 
 Removes liquidity from a pair by burning LP tokens and receiving the underlying tokens.
 
+<Note>
+A **1% withdrawal fee** is applied to liquidity removals. This fee remains in the pool reserves, benefiting remaining LPs.
+</Note>
+
+## Withdrawal Fee
+
+When removing liquidity, a 1% fee (`LIQUIDITY_WITHDRAWAL_FEE_BPS = 100`) is deducted from both token amounts:
+
+```
+amount_out = amount_gross - (amount_gross × 1%)
+```
+
+The fee remains in the pool's reserves, effectively increasing the value of remaining LP tokens. This mechanism:
+
+- Discourages short-term liquidity provision
+- Compensates remaining LPs for the impact of withdrawals
+- Reduces potential manipulation via rapid add/remove cycles
+
+<Info>
+**Future Enhancement:** Optionality to wait for a time period and withdraw for free, or withdraw instantly with the 1% fee.
+</Info>
+
 ## Accounts
 
 <ParamField body="pair" type="Account<Pair>" required>

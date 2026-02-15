@@ -1,11 +1,37 @@
 ---
-title: "Addresses "
-description: "Omnipair protocol deployed addresses."
+title: "Addresses & Access Controls"
+description: "Omnipair protocol deployed addresses and access control information."
 ---
 
-## Coming Soon
+## Access Controls
 
-| Name | Address | IDL |
-| :--- | ------- | --- |
-|      |         |     |
-|      |         |     |
+Omnipair's programs are deployed using the BPF Upgradeable Loader, enabling the Upgrade Authority to push updates when necessary.
+
+**All program Upgrade and Admin Authority is held under a [Squads multi-sig](https://app.squads.so/squads/4JpPs9Mi11qoj6GthQPiTjUc4gXq8BAoSs3AD6NVjQUZ/home).**
+
+Programs are fully upgradeable (labeled as such on [Solscan](https://solscan.io/account/omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE)). All changes undergo review by core team members prior to deployment. For significant updates, Omnipair engages security auditors for thorough review.
+
+<Note>
+Omnipair does not currently employ a timelock for upgrades. Timelock mechanisms are planned as the protocol moves toward further decentralization and community governance.
+</Note>
+
+## Core Programs and Access control
+
+| Program | Address |
+| ------- | ------- |
+| Omnipair v0.9.6 |[omnixg...kQDkYE](https://solscan.io/account/omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE#programVerification)|[View IDL](https://solscan.io/account/omnixgS8fnqHfCcTGKWj6JtKjzpJZ1Y5y9pyFkQDkYE#programIdl)|
+| Futarchy Authority |[2SMS1Y...1vim3E](https://solscan.io/account/2SMS1Y4EAyL2dQLpXD6VJCrNbQJ2eQ2pN3qYcX1vim3E)|[View Account Data](https://solscan.io/account/2SMS1Y4EAyL2dQLpXD6VJCrNbQJ2eQ2pN3qYcX1vim3E?cluster=mainnet-beta#accountData)|
+| Omnipair DAO Treasury |[34rned...gGuXD9](https://solscan.io/account/34rned2SLUcYjUrM9meQkuyJY4QDBcKhkcUPXCgGuXD9)|[View on Squads](https://app.squads.so/squads/34rned2SLUcYjUrM9meQkuyJY4QDBcKhkcUPXCgGuXD9/home)|
+| Upgrade Authority (Multi-sig) |[4JpPs9...NVjQUZ](https://solscan.io/account/4JpPs9Mi11qoj6GthQPiTjUc4gXq8BAoSs3AD6NVjQUZ)|[View on Squads](https://app.squads.so/squads/4JpPs9Mi11qoj6GthQPiTjUc4gXq8BAoSs3AD6NVjQUZ/home)|
+
+
+
+## Auxiliary Programs
+
+| Program | Address |
+| ------- | ------- |
+| Auto-leveraging | `TBD` |
+| Router | `TBD` |
+| <Tooltip tip="Continuous Dutch Auction for selling collected protocol fees against USDC to get best prices for arbitrary tokens">Revenue CDA</Tooltip> | `TBD` |
+| <Tooltip tip="Continuous Dutch Auction for protocol token buybacks using collected revenue">Buybacks CDA</Tooltip> | `TBD` |
+

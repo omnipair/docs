@@ -57,6 +57,36 @@ Where:
 - `x` = input reserve
 - `Δy` = output amount
 
+## Fee Structure
+
+Swap fees are split between liquidity providers and the protocol:
+
+$$
+\text{Swap Fee} = \text{amount\_in} \times \frac{\text{swap\_fee\_bps}}{10000}
+$$
+
+### Fee Distribution
+
+| Recipient | Calculation | Destination |
+|-----------|-------------|-------------|
+| **Futarchy** | `swap_fee × revenue_share.swap_bps / 10000` | Transferred immediately to authority token account |
+| **LPs** | `swap_fee - futarchy_fee` | Added to virtual and cash reserves |
+
+### Reserve Updates
+
+The LP portion of the fee increases both virtual and cash reserves:
+
+```
+amount_in_with_lp_fee = amount_in - futarchy_fee
+new_reserve_in = reserve_in + amount_in_with_lp_fee
+cash_reserve_in = cash_reserve_in + amount_in_with_lp_fee
+```
+
+This means:
+- LP fees compound directly into pool liquidity
+- Futarchy fees are extracted immediately and do not affect reserves
+- The constant product invariant is preserved or increased after each swap
+
 <RequestExample>
 
 ```rust
