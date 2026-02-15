@@ -1,23 +1,68 @@
 ---
-title: "Quickstart"
-mode: "center"
+title: "Introduction"
+description: "Welcome to Omnipair — The Permissionless Spot & Margin Trading Protocol"
 ---
 
-## Introduction
+Omnipair is a decentralized [hyperstructure](https://nicogs.medium.com/hyperstructures-5e6f36c2c82b) protocol for spot and margin trading, designed for permissionless, oracle-less, and isolated-collateral markets on Solana.
 
-Get started with Omnipair and understand the fundamentals.
+## How it works
 
-<Columns cols={2}>
-  <Card title="What is Omnipair?" icon="sparkles" href="/introduction">
-    Overview of Omnipair, a decentralized protocol for spot and margin trading.
+- The **Generalized AMM (GAMM)** unifies swaps and lending in a single pool, where liquidity is natively lent to borrowers, maximizing capital efficiency.
+- Borrowers can take margin positions by choosing collateral and debt tokens within the same pool, with **EMA-based pricing** for manipulation-resistant valuations.
+- The protocol adjusts collateral factors dynamically based on **price impact**, ensuring large positions cannot borrow more than their collateral can cover in liquidation.
+- Each pool operates in **isolation** — insolvencies in one market do not affect others, enabling safe support for long-tail assets.
+- Liquidations use **debt write-off** with pessimistic pricing, eliminating reliance on external liquidators or oracles.
+
+## Getting Started
+
+Choose your path to explore Omnipair:
+
+<CardGroup cols={2}>
+  <Card title="Why Omnipair?" icon="circle-question" href="/omnipair/problem">
+    Understand the problems with traditional DeFi money markets and why Omnipair exists.
   </Card>
-  <Card title="Problem" icon="exclamation-triangle" href="/omnipair/problem">
-    Challenges in current DeFi money markets and margin trading.
+  <Card title="How It Works" icon="gears" href="/omnipair/solution">
+    Learn how Omnipair solves permissionless margin trading without oracles.
   </Card>
-  <Card title="Solution" icon="lightbulb" href="/omnipair/solution">
-    Omnipair's approach to addressing DeFi trading challenges.
+  <Card title="Start Trading" icon="arrow-right-arrow-left" href="/documentation/guide/getting-started">
+    Get started with swapping, providing liquidity, or taking leveraged positions.
   </Card>
-  <Card title="Overview" icon="wrench" href="/technical-breakdown/overview">
-    An overview of Omnipair's Generalized Automated Market Maker (GAMM).
+  <Card title="Read the FAQ" icon="circle-info" href="/documentation/resources/faq">
+    Get answers to frequently asked questions about the protocol.
   </Card>
-</Columns>
+</CardGroup>
+
+## Under the hood
+
+Dive deeper into the technical aspects and advanced features of Omnipair:
+
+<CardGroup cols={2}>
+  <Card title="Protocol Deep Dive" icon="microchip" href="/technical-breakdown/overview">
+    Understand the GAMM model, EMA pricing, collateral factors, and liquidation mechanics.
+  </Card>
+  <Card title="Security & Audits" icon="shield-halved" href="/documentation/resources/security">
+    Review our security audits, protocol governance, and risk disclosures.
+  </Card>
+  <Card title="Addresses & Access" icon="key" href="/documentation/resources/addresses">
+    Access deployed contract addresses and access control information.
+  </Card>
+  <Card title="Code Reference" icon="code" href="/api-reference/introduction">
+    Complete reference for all Omnipair instructions with detailed specifications.
+  </Card>
+</CardGroup>
+
+## Join the Community
+
+Like what you see? Join the Omnipair community to stay updated and ask questions:
+
+<CardGroup cols={3}>
+  <Card title="Discord" icon="discord" href="https://discord.gg/omnipair">
+    Chat with the team and community members.
+  </Card>
+  <Card title="Twitter / X" icon="x-twitter" href="https://x.com/omnipair">
+    Follow for announcements and updates.
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/omnipair">
+    Explore the open-source codebase.
+  </Card>
+</CardGroup>
