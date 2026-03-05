@@ -8,6 +8,10 @@ icon: 'npm'
 
 The `@omnipair/program-interface` package provides TypeScript bindings for the Omnipair Solana program, including the Anchor IDL, TypeScript types, PDA derivation utilities, and constants.
 
+<Info>
+The examples on this page follow the latest package behavior from `@omnipair/program-interface` (current npm release: `0.9.11`).
+</Info>
+
 <Card title="NPM Package" icon="npm" href="https://www.npmjs.com/package/@omnipair/program-interface">
   View on npm registry
 </Card>
@@ -33,6 +37,11 @@ pnpm add @omnipair/program-interface @coral-xyz/anchor @solana/web3.js
 | Package | Version |
 | ------- | ------- |
 | `@coral-xyz/anchor` | >= 0.30.0 |
+
+### Package Dependencies
+
+| Package | Version |
+| ------- | ------- |
 | `@solana/web3.js` | ^1.95.0 |
 
 ---
@@ -57,14 +66,19 @@ Fully typed program interface for Anchor:
 
 ```typescript
 import { Program } from "@coral-xyz/anchor";
-import { IDL, Omnipair, PROGRAM_ID } from "@omnipair/program-interface";
+import { IDL } from "@omnipair/program-interface";
+import type { Omnipair } from "@omnipair/program-interface";
 
-const program = new Program<Omnipair>(IDL, PROGRAM_ID, provider);
+const program = new Program<Omnipair>(IDL, provider);
 
 // All methods are fully typed
 const pair = await program.account.pair.fetch(pairAddress);
 // pair.reserve0, pair.reserve1, etc. are typed as BN
 ```
+
+<Note>
+`Omnipair` is a type-only export. In TypeScript, import it with `import type { Omnipair } ...`.
+</Note>
 
 ### Constants
 
@@ -84,6 +98,7 @@ console.log(SEEDS);
 import { 
   derivePairAddress, 
   deriveUserPositionAddress,
+  deriveFutarchyAuthorityAddress,
   deriveReserveVaultAddress,
   deriveCollateralVaultAddress
 } from "@omnipair/program-interface";
@@ -96,21 +111,24 @@ import {
 ### Initialize Program
 
 ```typescript
-import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
-import { Connection, PublicKey, Keypair } from "@solana/web3.js";
-import { IDL, Omnipair, PROGRAM_ID } from "@omnipair/program-interface";
+import * as anchor from "@coral-xyz/anchor";
+import { IDL } from "@omnipair/program-interface";
+import type { Omnipair } from "@omnipair/program-interface";
 
 // Setup connection
-const connection = new Connection("https://api.mainnet-beta.solana.com");
+const connection = new anchor.web3.Connection(
+  process.env.ANCHOR_PROVIDER_URL ?? "https://api.mainnet-beta.solana.com",
+  "confirmed"
+);
 
 // Create provider with wallet
-const wallet = new Wallet(Keypair.generate()); // Use your wallet
-const provider = new AnchorProvider(connection, wallet, {
+const wallet = new anchor.Wallet(anchor.web3.Keypair.generate());
+const provider = new anchor.AnchorProvider(connection, wallet, {
   commitment: "confirmed",
 });
 
 // Initialize typed program
-const program = new Program<Omnipair>(IDL, PROGRAM_ID, provider);
+const program = new anchor.Program<Omnipair>(IDL, provider);
 ```
 
 ### Derive PDAs
@@ -118,10 +136,62 @@ const program = new Program<Omnipair>(IDL, PROGRAM_ID, provider);
 ```typescript
 import { derivePairAddress, deriveUserPositionAddress } from "@omnipair/program-interface";
 import { PublicKey } from "@solana/web3.js";
+import { createHash } from "node:crypto";
+
+type InitParams = {
+  version: number;
+  swapFeeBps: number;
+  halfLife: bigint;
+  fixedCfBps?: number;
+  targetUtilStartBps?: bigint;
+  targetUtilEndBps?: bigint;
+  rateHalfLifeMs?: bigint;
+  minRateBps?: bigint;
+  maxRateBps?: bigint;
+};
+
+function u16le(value: number): Buffer {
+  const b = Buffer.alloc(2);
+  b.writeUInt16LE(value, 0);
+  return b;
+}
+
+function u64le(value: bigint): Buffer {
+  const b = Buffer.alloc(8);
+  b.writeBigUInt64LE(value, 0);
+  return b;
+}
+
+function computeParamsHash(params: InitParams): Uint8Array {
+  const payload = Buffer.concat([
+    Buffer.from([params.version]),
+    u16le(params.swapFeeBps),
+    u64le(params.halfLife),
+    u16le(params.fixedCfBps ?? 0),
+    u64le(params.targetUtilStartBps ?? 0n),
+    u64le(params.targetUtilEndBps ?? 0n),
+    u64le(params.rateHalfLifeMs ?? 0n),
+    u64le(params.minRateBps ?? 0n),
+    u64le(params.maxRateBps ?? 0n),
+  ]);
+  return createHash("sha256").update(payload).digest();
+}
 
 // Token mints (must be ordered lexicographically)
 const token0 = new PublicKey("So11111111111111111111111111111111111111112"); // SOL
 const token1 = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // USDC
+
+const paramsHash = computeParamsHash({
+  version: 1,
+  swapFeeBps: 30,
+  halfLife: 3_600_000n,
+  fixedCfBps: undefined,
+  targetUtilStartBps: 3_000n,
+  targetUtilEndBps: 5_000n,
+  rateHalfLifeMs: 259_200_000n,
+  minRateBps: 100n,
+  maxRateBps: 0n,
+});
 
 // Derive pair PDA
 const [pairAddress, pairBump] = derivePairAddress(token0, token1, paramsHash);
@@ -295,6 +365,14 @@ import type {
   ClaimProtocolFeesEvent,
 } from "@omnipair/program-interface";
 ```
+
+### JavaScript Runtime Imports
+
+```javascript
+import { IDL, derivePairAddress } from "@omnipair/program-interface";
+```
+
+For JavaScript runtime code, only import runtime values. `Omnipair` is TypeScript-only.
 
 ---
 

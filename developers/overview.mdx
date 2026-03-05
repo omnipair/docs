@@ -69,25 +69,46 @@ npm install @omnipair/program-interface @coral-xyz/anchor @solana/web3.js
 ```typescript
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { IDL, Omnipair, PROGRAM_ID } from "@omnipair/program-interface";
+import { IDL } from "@omnipair/program-interface";
+import type { Omnipair } from "@omnipair/program-interface";
 
 // Create connection and provider
 const connection = new Connection("https://api.mainnet-beta.solana.com");
 const provider = new AnchorProvider(connection, wallet, {});
 
 // Initialize typed program instance
-const program = new Program<Omnipair>(IDL, PROGRAM_ID, provider);
+const program = new Program<Omnipair>(IDL, provider);
 ```
 
 ### 3. Fetch Pool Data
 
 ```typescript
 import { derivePairAddress } from "@omnipair/program-interface";
+import { createHash } from "node:crypto";
 
 // Derive pair PDA
 const token0 = new PublicKey("So11111111111111111111111111111111111111112"); // SOL
 const token1 = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // USDC
-const [pairAddress] = derivePairAddress(token0, token1);
+
+function computeParamsHash() {
+  // Use the same initialization params as the on-chain initialize instruction.
+  // See /developers/sdk for a full implementation.
+  const payload = Buffer.concat([
+    Buffer.from([1]), // version
+    Buffer.from([30, 0]), // swapFeeBps (u16 LE)
+    Buffer.from([128, 238, 54, 0, 0, 0, 0, 0]), // halfLife = 3_600_000 (u64 LE)
+    Buffer.alloc(2), // fixedCfBps = None -> 0
+    Buffer.alloc(8), // targetUtilStartBps
+    Buffer.alloc(8), // targetUtilEndBps
+    Buffer.alloc(8), // rateHalfLifeMs
+    Buffer.alloc(8), // minRateBps
+    Buffer.alloc(8), // maxRateBps
+  ]);
+  return createHash("sha256").update(payload).digest();
+}
+
+const paramsHash = computeParamsHash();
+const [pairAddress] = derivePairAddress(token0, token1, paramsHash);
 
 // Fetch pair account
 const pair = await program.account.pair.fetch(pairAddress);
